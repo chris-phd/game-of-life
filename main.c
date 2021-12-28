@@ -16,6 +16,10 @@ void processInput(GLFWwindow *window);
 int main(int argc, char *argv[]) {
     fprintf(stderr, "game-of-life::main: \n");
 
+    //
+    // CREATING THE WINDOW
+    //
+
     // Initialise GLFW
     if (!glfwInit()) {
         fprintf(stderr, "Failed to initialise GLFW\n");
@@ -44,15 +48,50 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, 1024, 768);
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+
+    //
+    // SETTING UP THE VERTEX BUFFERS
+    //
+
+#if 0
+    float lineVertices[] = {
+        -0.5, 0.0, 0.0, 
+        0.5, 0.0, 0.0
+    };
+#endif
+    float lineVertices[] = {
+        -0.5f, -0.5f, 0.0f,
+        0.5f, -0.5f, 0.0f,
+        0.0f, 0.5f, 0.0f
+    };
+
+    unsigned int vao; // vertex array object. stores the meta data about the buffers (i think??)
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+
+    unsigned int vbo; // vertex buffer object. stores the actual data on the GPU device (i think??)
+    glGenBuffers(1, &vbo); // glCreateBuffers is the more modern way of creating buffer objects avaliale from v4.5 onward
+    glBindBuffer(GL_ARRAY_BUFFER, vbo); // bind the vbo to the current bound vao
+    glBufferData(GL_ARRAY_BUFFER, sizeof(lineVertices), lineVertices, GL_STATIC_DRAW); // use static draw for data that will not change often 
+
+    //
+    // CREATING THE SHADER PROGRAM
+    //
 
     // A program contains the shaders that make up the graphics pipeline.
     // The vertex and fragment shaders are the minimu shaders that the programmer must specify
     GLuint program_id = createShaderProgram("../basic_color.vs", "../basic_color.fs");
+    fprintf(stderr, "program id = %d\n", program_id);
     glUseProgram(program_id);
 
     glClearColor(0.2, 0.3, 0.3, 1.0);
+
+    //
+    // MAIN LOOP
+    //
 
     // Loop until the the window is closed by the user
     while (!glfwWindowShouldClose(window)) {
@@ -60,6 +99,23 @@ int main(int argc, char *argv[]) {
 
         // Clear the window using the color set in glClearColor
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glVertexAttribPointer(
+                0, // must match the layout specifier in the vertex shader
+                3, // size
+                GL_FLOAT, // type
+                GL_FALSE, // noramlise?
+                0, // stride. 0 assumes tightly packed
+                (void*)0 // array buffer offset, if you want to start from somewhere else in the buffer
+                );
+
+        //glDrawArrays(GL_LINES, 0, 4);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glDisableVertexAttribArray(0);
 
         // Swap the fronty back buffer. We draw on the back buffer and then
         // swap to the front for rendering
@@ -73,6 +129,15 @@ int main(int argc, char *argv[]) {
     glfwTerminate();
     return 0;
 }
+
+//
+// Renderer code. Knows how to render a world
+//
+struct Renderer {
+    float zoom;
+};
+
+
 
 GLuint createShaderProgram(const char *vs_path, const char *fs_path) { // todo, add attributes as an input var...
 
