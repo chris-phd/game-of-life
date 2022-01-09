@@ -11,9 +11,14 @@ add_executable(game_of_life
                main.c 
                glad.c
                fileio.c
+               time_control.c
+               renderer.c
+               window.c
+               world.c
                )
 
 target_link_libraries(game_of_life
                       ${CMAKE_DL_LIBS}
                       glfw
+                      m
                       GL)
