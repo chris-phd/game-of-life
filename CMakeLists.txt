@@ -22,3 +22,10 @@ target_link_libraries(game_of_life
                       glfw
                       m
                       GL)
+
+add_executable(test_world
+               test_world.c
+               world.c
+               time_control.c
+               fileio.c
+               )
