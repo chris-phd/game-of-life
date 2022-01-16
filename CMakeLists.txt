@@ -15,6 +15,7 @@ add_executable(game_of_life
                renderer.c
                window.c
                world.c
+               matrix.c
                )
 
 target_link_libraries(game_of_life

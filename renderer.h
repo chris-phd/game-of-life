@@ -3,8 +3,22 @@
 
 #include "world.h"
 
-struct Renderer {
+#include <glad/glad.h>  // OpenGL loading library. Must be included before glfw
+#include <GLFW/glfw3.h> // Multiplatform library for OpenGL
 
+struct Renderer {
+   
+    GLuint program_id;
+
+    unsigned int vao;
+    unsigned int vbo;
+    unsigned int ibo;
+    unsigned int cbo;
+    unsigned int num_vertices;
+
+    GLuint model_matrix_id;
+    GLuint view_matrix_id;
+    GLuint perspective_matrix_id;
 };
 
 struct Renderer *rendererCreate();
