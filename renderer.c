@@ -202,14 +202,8 @@ void rendererDestroy(struct Renderer *self) {
 
 // is_alive = when true, cells are rendered solid.
 static void renderCell(struct Renderer *self, float pos[3], int is_alive) {
-    float scale_matrix[16];
-    scale(1.0, scale_matrix);
-
-    float pos_matrix[16];
-    translation(pos[0], pos[1], pos[2], pos_matrix);
-
     float model_matrix[16];
-    mult(pos_matrix, scale_matrix, model_matrix);
+    translation(pos[0], pos[1], pos[2], model_matrix);
     transpose(model_matrix);
 
     glUniformMatrix4fv(self->model_matrix_id, 1, GL_FALSE, model_matrix);
