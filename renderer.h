@@ -18,7 +18,7 @@ struct Renderer {
 
     GLuint model_matrix_id;
     GLuint view_matrix_id;
-    GLuint perspective_matrix_id;
+    GLuint projection_matrix_id;
 };
 
 struct Renderer *rendererCreate();

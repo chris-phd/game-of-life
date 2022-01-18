@@ -1,6 +1,19 @@
 #include "matrix.h"
 
 #include <math.h>
+#include <stdio.h>
+
+void translation(float x, float y, float z, float out_matrix[16]) {
+    identityMatrix(out_matrix);
+    out_matrix[3] = x;
+    out_matrix[7] = y;
+    out_matrix[11] = z;
+}
+
+void scale(float scale, float out_matrix[16]) {
+    identityMatrix(out_matrix);
+    out_matrix[0] = out_matrix[5] = out_matrix[10] = scale;
+}
 
 // Sort of works, but this seems to be producing a weird zoom level...
 void orthographicProjection(float left, float right, float bottom, float top, float near, float far, float out_matrix[16]) {
@@ -12,6 +25,8 @@ void orthographicProjection(float left, float right, float bottom, float top, fl
     out_matrix[12] = -(right + left) / (right - left);
     out_matrix[13] = - (top + bottom) / (top - bottom);
     out_matrix[14] = - (far + near) / (far - near);
+
+    transpose(out_matrix); // needed? 
 }
 
 /// Used to set the view matrix when you know the looking point.
@@ -48,7 +63,7 @@ void lookDir(const float eye[3], const float target[3], const float up[3], float
     rotation[10] = zaxis[2];
     
     mult(rotation, translation, out_matrix);
-    transpose(out_matrix); // why do i need this??
+    transpose(out_matrix);
 }
 
 float dot(const float a[3], const float b[3]) {
@@ -126,4 +141,13 @@ void transpose(float a[16]) {
     a[13] = b[7];
     a[14] = b[11];
     a[15] = b[15];
+}
+
+void printMat4x4(float a[16]) {
+
+    fprintf(stderr, "\t%.3f, %.3f, %.3f, %.3f\n", a[0], a[1], a[2], a[3]);
+    fprintf(stderr, "\t%.3f, %.3f, %.3f, %.3f\n", a[4], a[5], a[6], a[7]);
+    fprintf(stderr, "\t%.3f, %.3f, %.3f, %.3f\n", a[8], a[9], a[10], a[11]);
+    fprintf(stderr, "\t%.3f, %.3f, %.3f, %.3f\n", a[12], a[13], a[14], a[15]);
+
 }

@@ -1,12 +1,15 @@
 #include "renderer.h"
 #include "fileio.h"
 #include "matrix.h"
+#include "window.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #define MAX_SHADER_LEN 4096
 
+// Global GLFW window
+extern struct Window window;
 
 /// Returns the handle to the created shader. Returns 0 if failed to create and compile.
 /// GLenum = GL_VERTEX_SHADER or GL_FRAGMENT_SHADER
@@ -34,23 +37,24 @@ static int createTransforms(struct Renderer *self) {
 
     self->model_matrix_id = glGetUniformLocation(self->program_id, "m");
     self->view_matrix_id = glGetUniformLocation(self->program_id, "v");
-    self->perspective_matrix_id = glGetUniformLocation(self->program_id, "p");
+    self->projection_matrix_id = glGetUniformLocation(self->program_id, "p");
 
     float model_matrix[16];
     identityMatrix(model_matrix);
 
     float view_matrix[16];
-    float eye[] = {4.0f, 3.0f, 3.0f};
+    float eye[] = {0.0f, 0.0f, 1.0f};
     float target[] = {0.0f, 0.0f, 0.0f};
     float up[] = {0.0f, 1.0f, 0.0f};
     lookDir(eye, target, up, view_matrix);
 
     float orthographic_matrix[16];
-    orthographicProjection(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 100.0f, orthographic_matrix);
+    float aspect = (float) window.size_x / window.size_y;
+    orthographicProjection(aspect*-1.0f, aspect*1.0f, -1.0f, 1.0f, 0.0f, 100.0f, orthographic_matrix);
 
     glUniformMatrix4fv(self->model_matrix_id, 1, GL_FALSE, model_matrix);
     glUniformMatrix4fv(self->view_matrix_id, 1, GL_FALSE, view_matrix);
-    glUniformMatrix4fv(self->perspective_matrix_id, 1, GL_FALSE, orthographic_matrix);
+    glUniformMatrix4fv(self->projection_matrix_id, 1, GL_FALSE, orthographic_matrix);
 
     return 1;
 }
@@ -187,6 +191,25 @@ void rendererDestroy(struct Renderer *self) {
 
 void renderWorld(struct Renderer *self, struct World *world) {
     fprintf(stderr, "renderer::renderWorld: \n");
+
+    // Is is possible to avoid doing this every loop, and do only when the
+    // aspect ratio changes?
+    float orthographic_matrix[16];
+    float aspect = (float) window.size_x / window.size_y;
+    orthographicProjection(aspect*-1.0f, aspect*1.0f, -1.0f, 1.0f, 0.0f, 100.0f, orthographic_matrix);
+
+    float scale_matrix[16];
+    scale(0.5, scale_matrix);
+
+    float pos[16];
+    translation(0.0, 0.0, 0.0, pos);
+
+    float model_matrix[16];
+    mult(pos, scale_matrix, model_matrix);
+    transpose(model_matrix);
+
+    glUniformMatrix4fv(self->model_matrix_id, 1, GL_FALSE, model_matrix);
+    glUniformMatrix4fv(self->projection_matrix_id, 1, GL_FALSE, orthographic_matrix);
 
     GLuint vs_layout_specifier = 0;
     glEnableVertexAttribArray(vs_layout_specifier);
