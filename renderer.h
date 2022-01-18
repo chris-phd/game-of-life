@@ -13,7 +13,8 @@ struct Renderer {
     unsigned int vao;
     unsigned int vbo;
     unsigned int ibo;
-    unsigned int cbo;
+    unsigned int cbo_alive;
+    unsigned int cbo_dead;
     unsigned int num_vertices;
 
     GLuint model_matrix_id;

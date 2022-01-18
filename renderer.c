@@ -119,11 +119,18 @@ static void createVertices(struct Renderer *self) {
     };
 
     // One color per vertex. (generated randomly for now)
-    float cell_color[] = {
+    float alive_cell_color[] = {
         0.583f,  0.771f,  0.014f,
         0.609f,  0.115f,  0.436f,
         0.327f,  0.483f,  0.844f,
         0.822f,  0.569f,  0.201f
+    };
+
+    float dead_cell_color[] = {
+        0.5f, 0.5f, 0.5f,
+        0.5f, 0.5f, 0.5f,
+        0.5f, 0.5f, 0.5f,
+        0.5f, 0.5f, 0.5f
     };
 
     // A little unecessary for a 2D cell since no vertices are shared.
@@ -145,9 +152,13 @@ static void createVertices(struct Renderer *self) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self->ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cell_indices), cell_indices, GL_STATIC_DRAW); 
 
-    glGenBuffers(1, &self->cbo);
-    glBindBuffer(GL_ARRAY_BUFFER, self->cbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cell_color), cell_color, GL_STATIC_DRAW); // could make this a dynamic draw if I want to change the color of the cells??
+    glGenBuffers(1, &self->cbo_alive);
+    glBindBuffer(GL_ARRAY_BUFFER, self->cbo_alive);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(alive_cell_color), alive_cell_color, GL_STATIC_DRAW); // could make this a dynamic draw if I want to change the color of the cells??
+    
+    glGenBuffers(1, &self->cbo_dead);
+    glBindBuffer(GL_ARRAY_BUFFER, self->cbo_dead);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(dead_cell_color), dead_cell_color, GL_STATIC_DRAW);
 }
 
 struct Renderer *rendererCreate() {
@@ -189,27 +200,19 @@ void rendererDestroy(struct Renderer *self) {
     free(self);
 }
 
-void renderWorld(struct Renderer *self, struct World *world) {
-    fprintf(stderr, "renderer::renderWorld: \n");
-
-    // Is is possible to avoid doing this every loop, and do only when the
-    // aspect ratio changes?
-    float orthographic_matrix[16];
-    float aspect = (float) window.size_x / window.size_y;
-    orthographicProjection(aspect*-1.0f, aspect*1.0f, -1.0f, 1.0f, 0.0f, 100.0f, orthographic_matrix);
-
+// is_alive = when true, cells are rendered solid.
+static void renderCell(struct Renderer *self, float pos[3], int is_alive) {
     float scale_matrix[16];
-    scale(0.5, scale_matrix);
+    scale(1.0, scale_matrix);
 
-    float pos[16];
-    translation(0.0, 0.0, 0.0, pos);
+    float pos_matrix[16];
+    translation(pos[0], pos[1], pos[2], pos_matrix);
 
     float model_matrix[16];
-    mult(pos, scale_matrix, model_matrix);
+    mult(pos_matrix, scale_matrix, model_matrix);
     transpose(model_matrix);
 
     glUniformMatrix4fv(self->model_matrix_id, 1, GL_FALSE, model_matrix);
-    glUniformMatrix4fv(self->projection_matrix_id, 1, GL_FALSE, orthographic_matrix);
 
     GLuint vs_layout_specifier = 0;
     glEnableVertexAttribArray(vs_layout_specifier);
@@ -219,12 +222,35 @@ void renderWorld(struct Renderer *self, struct World *world) {
 
     vs_layout_specifier = 1;
     glEnableVertexAttribArray(vs_layout_specifier);
-    glBindBuffer(GL_ARRAY_BUFFER, self->cbo);
+    if (is_alive)
+        glBindBuffer(GL_ARRAY_BUFFER, self->cbo_alive);
+    else
+        glBindBuffer(GL_ARRAY_BUFFER, self->cbo_dead);
     glVertexAttribPointer(vs_layout_specifier, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glDrawElements(GL_TRIANGLES, self->num_vertices, GL_UNSIGNED_INT, (void*)0);
 
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(0);
+
+}
+
+void renderWorld(struct Renderer *self, struct World *world) {
+    fprintf(stderr, "renderer::renderWorld: \n");
+
+    // Is is possible to avoid doing this every loop, and do only when the
+    // aspect ratio changes?
+    float orthographic_matrix[16];
+    float aspect = (float) window.size_x / window.size_y;
+    orthographicProjection(aspect*-1.0f, aspect*1.0f, -1.0f, 1.0f, 0.0f, 100.0f, orthographic_matrix);
+    glUniformMatrix4fv(self->projection_matrix_id, 1, GL_FALSE, orthographic_matrix);
+
+    int is_alive = 1;
+    float cell_pos[] = {0.0, 0.0, 0.0};
+    renderCell(self, cell_pos, is_alive);
+
+    is_alive = 0;
+    cell_pos[0] = 1.0;
+    renderCell(self, cell_pos, is_alive);
 }
 
 void renderClear(struct Renderer *self) {
