@@ -14,8 +14,11 @@ struct Button {
 
 struct Mouse {
     struct Button buttons[GLFW_MOUSE_BUTTON_LAST]; 
+    double scroll;
     double pos_x;
     double pos_y;
+    double dx;
+    double dy;
 };
 
 struct Keyboard {

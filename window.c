@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 // Global window
 struct Window window;
@@ -13,15 +14,19 @@ static void framebufferSizeCallback(GLFWwindow *handle, int width, int height) {
 }
 
 static void cursorPosCallback(GLFWwindow *handle, double xp, double yp) {
+    double dx = xp - window.mouse.pos_x;
+    double dy = yp - window.mouse.pos_y;
+    window.mouse.dx = dx;
+    window.mouse.dy = dy;
     window.mouse.pos_x = xp;
     window.mouse.pos_y = yp;
-}
+}   
 
 static void mouseButtonCallback(GLFWwindow *handle, int button, int action, int mods) {
     if (button < 0)
         return;
 
-    fprintf(stderr, "window::mouseButtonCallback: mouse pos x = %f, mouse pos y = %f\n", window.mouse.pos_x, window.mouse.pos_y);
+    fprintf(stderr, "window::mouseButtonCallback: button = %d, mouse pos x = %f, mouse pos y = %f\n", button, window.mouse.pos_x, window.mouse.pos_y);
 
     switch (action) {
         case GLFW_PRESS:
@@ -33,6 +38,18 @@ static void mouseButtonCallback(GLFWwindow *handle, int button, int action, int 
         default:
             break;
     }
+}
+
+static void mouseScrollCallback(GLFWwindow *handle, double xoffset, double yoffset)
+{
+    fprintf(stderr, "window::mouseScrollCallback: scroll = %f \n", window.mouse.scroll);
+    window.mouse.scroll += yoffset;
+
+    if (window.mouse.scroll > 100.0)
+        window.mouse.scroll = 100.0;
+    else if (window.mouse.scroll < 1.0)
+        window.mouse.scroll = 1.0;
+        
 }
 
 static void keyCallback(GLFWwindow *handle, int key, int scancode, int action, int mods) {
@@ -68,7 +85,7 @@ int windowInit() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create the window handle
-    window.fps.ticks_per_sec = 30.0f;
+    window.fps.ticks_per_sec = 60.0f;
     window.fps.last_tick = timeNow();
     window.size_x = 1024;
     window.size_y = 768;
@@ -91,6 +108,9 @@ int windowInit() {
     glfwSetCursorPosCallback(window.handle, cursorPosCallback);
     glfwSetKeyCallback(window.handle, keyCallback);
     glfwSetMouseButtonCallback(window.handle, mouseButtonCallback);
+    glfwSetScrollCallback(window.handle, mouseScrollCallback);
+
+    window.mouse.scroll = 10.0;
 
     return 1;
 }
@@ -102,7 +122,6 @@ void windowCleanup() {
 }
 
 void windowProcessInput() {
-    fprintf(stderr, "window::processInput:\n");
     if (glfwGetKey(window.handle, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window.handle, 1);
 }

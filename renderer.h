@@ -17,6 +17,8 @@ struct Renderer {
     unsigned int cbo_dead;
     unsigned int num_vertices;
 
+    float eye[3];
+
     GLuint model_matrix_id;
     GLuint view_matrix_id;
     GLuint projection_matrix_id;

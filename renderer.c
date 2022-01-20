@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define MAX_SHADER_LEN 4096
 
@@ -43,10 +44,12 @@ static int createTransforms(struct Renderer *self) {
     identityMatrix(model_matrix);
 
     float view_matrix[16];
-    float eye[] = {0.0f, 0.0f, 1.0f};
+    self->eye[0] = 0.0f;
+    self->eye[1] = 0.0f;
+    self->eye[2] = 1.0f;
     float target[] = {0.0f, 0.0f, 0.0f};
     float up[] = {0.0f, 1.0f, 0.0f};
-    lookDir(eye, target, up, view_matrix);
+    lookDir(self->eye, target, up, view_matrix);
 
     float orthographic_matrix[16];
     float aspect = (float) window.size_x / window.size_y;
@@ -111,11 +114,12 @@ GLuint createShaderProgram(const char *vs_path, const char *fs_path) {
 static void createVertices(struct Renderer *self) {
 
     // Cell vertices in local coords
+    float cell_size = 0.49;
     float cell_vertices[] = {
-         0.5,  0.5,  0.0,
-         0.5, -0.5,  0.0,
-        -0.5,  0.5,  0.0,
-        -0.5, -0.5,  0.0,
+         cell_size,  cell_size,  0.0,
+         cell_size, -cell_size,  0.0,
+        -cell_size,  cell_size,  0.0,
+        -cell_size, -cell_size,  0.0,
     };
 
     // One color per vertex. (generated randomly for now)
@@ -228,15 +232,60 @@ static void renderCell(struct Renderer *self, float pos[3], int is_alive) {
 
 }
 
+static float windowZoom() {
+    return window.mouse.scroll * 0.1f;
+}
+
+static void handleMoveCommands(struct Renderer *self) {
+    
+    float speed = 0.05f;
+    float dx = 0.0f;
+    float dy = 0.0f;
+
+    if (window.keyboard.keys[GLFW_KEY_W].pressed || window.keyboard.keys[GLFW_KEY_UP].pressed)
+        dy += speed;
+
+    if (window.keyboard.keys[GLFW_KEY_S].pressed || window.keyboard.keys[GLFW_KEY_DOWN].pressed)
+        dy -= speed;
+
+    if (window.keyboard.keys[GLFW_KEY_A].pressed || window.keyboard.keys[GLFW_KEY_LEFT].pressed)
+        dx += speed;
+
+    if (window.keyboard.keys[GLFW_KEY_D].pressed || window.keyboard.keys[GLFW_KEY_RIGHT].pressed)
+        dx -= speed;
+
+    if (fabs(dx) > speed*0.1f || fabs(dy) > speed*0.1f) {
+        float zoom = windowZoom();
+        self->eye[0] = self->eye[0] + (dx * zoom);
+        self->eye[1] = self->eye[1] - (dy * zoom);
+
+        fprintf(stderr, "    eye.x = %f, eye.y = %f\n", self->eye[0], self->eye[1]);
+    }
+}
+
 void renderWorld(struct Renderer *self, struct World *world) {
-    fprintf(stderr, "renderer::renderWorld: \n");
+    handleMoveCommands(self);
+
 
     // Is is possible to avoid doing this every loop, and do only when the
     // aspect ratio changes?
     float orthographic_matrix[16];
     float aspect = (float) window.size_x / window.size_y;
-    orthographicProjection(aspect*-1.0f, aspect*1.0f, -1.0f, 1.0f, 0.0f, 100.0f, orthographic_matrix);
+    float aspect_inv = 1.0f / aspect;
+    float zoom = windowZoom();
+    orthographicProjection(aspect*zoom*-1.0f, aspect*zoom*1.0f, 
+                           -zoom*1.0f, zoom*1.0f, 0.0f, 1000.0f, orthographic_matrix);
     glUniformMatrix4fv(self->projection_matrix_id, 1, GL_FALSE, orthographic_matrix);
+
+    
+    float view_matrix[16];
+    float target[] = {self->eye[0], self->eye[1], 0.0f};
+    float up[] = {0.0f, 1.0f, 0.0f};
+    lookDir(self->eye, target, up, view_matrix);
+    glUniformMatrix4fv(self->view_matrix_id, 1, GL_FALSE, view_matrix);
+
+    fprintf(stderr, "view_matrix: \n");
+    printMat4x4(view_matrix);
 
     int is_alive = 1;
     float cell_pos[] = {0.0, 0.0, 0.0};
@@ -245,10 +294,17 @@ void renderWorld(struct Renderer *self, struct World *world) {
     is_alive = 0;
     cell_pos[0] = 1.0;
     renderCell(self, cell_pos, is_alive);
+    
+    is_alive = 1;
+    cell_pos[1] = -1.0;
+    renderCell(self, cell_pos, is_alive);
+
+    is_alive = 0;
+    cell_pos[0] = 0.0;
+    renderCell(self, cell_pos, is_alive);
 }
 
 void renderClear(struct Renderer *self) {
-    fprintf(stderr, "renderer::renderClear: \n");
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }

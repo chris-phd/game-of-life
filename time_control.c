@@ -5,8 +5,6 @@
 #include <math.h>
 
 void sleepTillNextTick(struct TimeControl *self) {
-    fprintf(stderr, "time_control::sleepTillNextTick: \n");
-
     unsigned long now = timeNow();
     unsigned long total = timeBetweenTicks(self);
     unsigned long elapsed = now - self->last_tick;
@@ -20,19 +18,19 @@ void sleepTillNextTick(struct TimeControl *self) {
 }
 
 int hasNextTickPassed(struct TimeControl *self) {
-    fprintf(stderr, "time_control::hasNextTickPassed: \n");
-    return 1;
+    // TODO, reduce repetition with sleepTillNextTick
+    unsigned long now = timeNow();
+    unsigned long total = timeBetweenTicks(self);
+    unsigned long elapsed = now - self->last_tick;
+    return elapsed > total;
 }
 
 unsigned long timeBetweenTicks(struct TimeControl *self) {
-    fprintf(stderr, "time_control::timeBetweenTicks: \n");
     double us_per_sec = 1000000.0;
     return (unsigned long)((1.0 / self->ticks_per_sec ) * us_per_sec);
 }
 
 unsigned long timeNow() {
-    fprintf(stderr, "time_control::timeNow: \n");
-    
     const unsigned long us_per_sec = 1000000;
     const double us_per_ns  = 0.001;
     struct timespec ts;
