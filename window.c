@@ -130,12 +130,15 @@ void windowLoop(struct Renderer *renderer, struct World *world) {
     fprintf(stderr, "window::windowLoop: \n");
 
     while (!glfwWindowShouldClose(window.handle)) {
+        
         windowProcessInput();
-
         renderClear(renderer);
         renderWorld(renderer, world);
-
         glfwSwapBuffers(window.handle);
+
+        if (hasNextTickPassed(&world->update_rate))
+            worldUpdate(world);
+
         sleepTillNextTick(&window.fps);
         glfwPollEvents();
     }

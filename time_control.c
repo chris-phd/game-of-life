@@ -22,7 +22,11 @@ int hasNextTickPassed(struct TimeControl *self) {
     unsigned long now = timeNow();
     unsigned long total = timeBetweenTicks(self);
     unsigned long elapsed = now - self->last_tick;
-    return elapsed > total;
+    if (elapsed > total) {
+        self->last_tick = now;
+        return 1;
+    }
+    return 0;
 }
 
 unsigned long timeBetweenTicks(struct TimeControl *self) {

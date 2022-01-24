@@ -256,8 +256,8 @@ static void handleMoveCommands(struct Renderer *self) {
 
     if (fabs(dx) > speed*0.1f || fabs(dy) > speed*0.1f) {
         float zoom = windowZoom();
-        self->eye[0] = self->eye[0] + (dx * zoom);
-        self->eye[1] = self->eye[1] - (dy * zoom);
+        self->eye[0] = self->eye[0] - (dx * zoom);
+        self->eye[1] = self->eye[1] + (dy * zoom);
 
         fprintf(stderr, "    eye.x = %f, eye.y = %f\n", self->eye[0], self->eye[1]);
     }
@@ -287,21 +287,22 @@ void renderWorld(struct Renderer *self, struct World *world) {
     fprintf(stderr, "view_matrix: \n");
     printMat4x4(view_matrix);
 
-    int is_alive = 1;
-    float cell_pos[] = {0.0, 0.0, 0.0};
-    renderCell(self, cell_pos, is_alive);
 
-    is_alive = 0;
-    cell_pos[0] = 1.0;
-    renderCell(self, cell_pos, is_alive);
-    
-    is_alive = 1;
-    cell_pos[1] = -1.0;
-    renderCell(self, cell_pos, is_alive);
-
-    is_alive = 0;
-    cell_pos[0] = 0.0;
-    renderCell(self, cell_pos, is_alive);
+    float top_left[] = {0.0f, 0.0f, 0.0f};
+    float cell_pos[] = {0.0f, 0.0f, 0.0f};
+    float cell_spacing = 1.0;
+    for (int r = 0; r < world->rows; ++r) {
+        for (int c = 0; c < world->cols; ++c) {
+            unsigned char *cell = worldCell(world, c, r);
+            if (!cell) {
+                fprintf(stderr, "renderer::renderWorld: No value at cell (%d %d)\n", c, r);
+                return;
+            }
+            cell_pos[0] = top_left[0] + cell_spacing * c;
+            cell_pos[1] = top_left[1] - cell_spacing * r;
+            renderCell(self, cell_pos, *cell);
+        }
+    }
 }
 
 void renderClear(struct Renderer *self) {
