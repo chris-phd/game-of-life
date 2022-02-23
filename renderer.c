@@ -273,8 +273,8 @@ void renderWorld(struct Renderer *self, struct World *world) {
     float aspect = (float) window.size_x / window.size_y;
     float aspect_inv = 1.0f / aspect;
     float zoom = windowZoom();
-    orthographicProjection(aspect*zoom*-1.0f, aspect*zoom*1.0f, 
-                           -zoom*1.0f, zoom*1.0f, 0.0f, 1000.0f, orthographic_matrix);
+    orthographicProjection(aspect*zoom*-1.0f, aspect*zoom*1.0f, -zoom*1.0f, 
+                           zoom*1.0f, 0.0f, 1000.0f, orthographic_matrix);
     glUniformMatrix4fv(self->projection_matrix_id, 1, GL_FALSE, orthographic_matrix);
 
     

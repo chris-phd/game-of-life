@@ -1,0 +1,6 @@
+- Grow the world (or render an empty cell backgroud) when the camera views the edge of the world
+- Test a glider.
+
+- Pause and Unpause sim?
+- Speed up / Slow down sim?
+- Add an editting mode?

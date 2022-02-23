@@ -34,7 +34,7 @@ void lookDir(const float eye[3], const float target[3], const float up[3], float
 
     float xaxis[3];
     float yaxis[3];
-    float zaxis[3] = {eye[0] - target[0], eye[1] - target[1], eye[2] - target[1]};
+    float zaxis[3] = {eye[0] - target[0], eye[1] - target[1], eye[2] - target[2]};
     normalise(zaxis);
 
     cross(up, zaxis, xaxis);
