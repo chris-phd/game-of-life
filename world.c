@@ -1,4 +1,5 @@
 #include "world.h"
+#include "fileio.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,12 +22,18 @@ struct World *worldCreate() {
     self->rows = 20;
     self->cols = 20;
     self->cells = calloc(self->rows * self->cols, sizeof(unsigned char));
+    if (!self->cells) {
+        fprintf(stderr, "Failed to allocate memory for the world cells.\n");
+        free(self);
+        return NULL;
+    }
+
     self->cn_rows = self->rows + 2;
     self->cn_cols = self->cols + 2;
     self->cells_next = calloc(self->cn_rows * self->cn_cols, sizeof(unsigned char));
-
-    if (!self->cells || !self->cells_next) {
-        fprintf(stderr, "Failed to allocate memory for the world cells.\n");
+    if (!self->cells_next) {
+        fprintf(stderr, "Failed to allocate memory for the world cells_next.\n");
+        free(self->cells);
         free(self);
         return NULL;
     }
@@ -85,14 +92,14 @@ int worldUpdate(struct World *self) {
                 unsigned char *cell_next = worldCellNext(self, c, r);
                 *cell_next = 1;
                 
-                if (!grow_left && r == -1)
-                    grow_left = 1;
-                if (!grow_right && r == self->rows)
-                    grow_right = 1;
-                if (!grow_top && c == -1)
+                if (!grow_top && r == -1)
                     grow_top = 1;
-                if (!grow_bottom && c == self->cols)
+                if (!grow_bottom && r == self->rows)
                     grow_bottom = 1;
+                if (!grow_left && c == -1)
+                    grow_left = 1;
+                if (!grow_right && c == self->cols)
+                    grow_right = 1;
 
             } else {
                 unsigned char *cell_next = worldCellNext(self, c, r);
@@ -104,9 +111,13 @@ int worldUpdate(struct World *self) {
     // Increase the size of the domain if necessary
     int increase_size = grow_left || grow_right || grow_top || grow_bottom;
     if (increase_size) {
-        self->rows = self->rows + (unsigned int) (grow_left + grow_right);
-        self->cols = self->cols + (unsigned int) (grow_top + grow_bottom);
-        self->cells = (unsigned char*) realloc(self->cells, sizeof(unsigned char) * self->rows * self->cols);
+        fprintf(stderr, "world::worldUpdate: increasing size for the MAIN cells\n");
+        fprintf(stderr, "    prev size: row = %d, cols = %d", self->rows, self->cols);
+        self->rows = self->rows + (unsigned int) (grow_top + grow_bottom);
+        self->cols = self->cols + (unsigned int) (grow_left + grow_right);
+        fprintf(stderr, "    new size: row = %d, cols = %d", self->rows, self->cols);
+        self->cells = realloc(self->cells, sizeof(unsigned char) * self->rows * self->cols);
+        fprintf(stderr, "    successfully updates\n");
         if (!self->cells) {
             fprintf(stderr, "world::worldUpdate: Error! Failed to allocate memory to increase cells.\n");
             return 0;            
@@ -130,9 +141,24 @@ int worldUpdate(struct World *self) {
 
 
     if (increase_size) {
-        self->cn_rows = self->cn_rows + (unsigned int) (grow_left + grow_right);
-        self->cn_cols = self->cn_cols + (unsigned int) (grow_top + grow_bottom);
-        self->cells_next = (unsigned char*) realloc(self->cells_next, sizeof(unsigned char) * self->cn_rows * self->cn_cols);
+        fprintf(stderr, "world::worldUpdate: increasing size\n");
+        fprintf(stderr, "    grow_left   = %d\n", grow_left);
+        fprintf(stderr, "    grow_right  = %d\n", grow_right);
+        fprintf(stderr, "    grow_top    = %d\n", grow_top);
+        fprintf(stderr, "    grow_bottom = %d\n", grow_bottom);
+
+        fprintf(stderr, "    prev size, cn_rows = %d, cn_cols = %d\n", 
+                self->cn_rows, self->cn_cols);
+
+        self->cn_rows = self->cn_rows + (unsigned int) (grow_top + grow_bottom);
+        self->cn_cols = self->cn_cols + (unsigned int) (grow_left + grow_right);
+        
+        fprintf(stderr, "    reallocating size, cn_rows = %d, cn_cols = %d\n", 
+                self->cn_rows, self->cn_cols);
+
+        self->cells_next = realloc(self->cells_next, sizeof(unsigned char) * self->cn_rows * self->cn_cols);
+        
+        fprintf(stderr, "    successfully reallocated\n");
         if (!self->cells_next) {
             fprintf(stderr, "world::worldUpdate: Error! Failed to allocate memory to increase cells_next.\n");
             return 0;            

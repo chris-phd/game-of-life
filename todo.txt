@@ -1,3 +1,5 @@
+Currently testing a glider, world is failing to increase size properly. 
+
 - Grow the world (or render an empty cell backgroud) when the camera views the edge of the world
 - Test a glider.
 

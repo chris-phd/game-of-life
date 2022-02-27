@@ -44,8 +44,8 @@ static int createTransforms(struct Renderer *self) {
     identityMatrix(model_matrix);
 
     float view_matrix[16];
-    self->eye[0] = 0.0f;
-    self->eye[1] = 0.0f;
+    self->eye[0] = 10.0f;
+    self->eye[1] = -10.0f;
     self->eye[2] = 1.0f;
     float target[] = {0.0f, 0.0f, 0.0f};
     float up[] = {0.0f, 1.0f, 0.0f};
@@ -258,8 +258,6 @@ static void handleMoveCommands(struct Renderer *self) {
         float zoom = windowZoom();
         self->eye[0] = self->eye[0] - (dx * zoom);
         self->eye[1] = self->eye[1] + (dy * zoom);
-
-        fprintf(stderr, "    eye.x = %f, eye.y = %f\n", self->eye[0], self->eye[1]);
     }
 }
 
@@ -284,18 +282,21 @@ void renderWorld(struct Renderer *self, struct World *world) {
     lookDir(self->eye, target, up, view_matrix);
     glUniformMatrix4fv(self->view_matrix_id, 1, GL_FALSE, view_matrix);
 
-    fprintf(stderr, "view_matrix: \n");
-    printMat4x4(view_matrix);
-
-
-    float top_left[] = {0.0f, 0.0f, 0.0f};
+    float cell_spacing = 1.0f;
+    float top_left[] = {cell_spacing * (float)world->tl_cell_pos_x, 
+                        cell_spacing * (float)world->tl_cell_pos_y, 
+                        0.0f};
     float cell_pos[] = {0.0f, 0.0f, 0.0f};
-    float cell_spacing = 1.0;
     for (int r = 0; r < world->rows; ++r) {
         for (int c = 0; c < world->cols; ++c) {
             unsigned char *cell = worldCell(world, c, r);
             if (!cell) {
                 fprintf(stderr, "renderer::renderWorld: No value at cell (%d %d)\n", c, r);
+                fprintf(stderr, "    tl_cell_pos_x = %d\n", world->tl_cell_pos_x);
+                fprintf(stderr, "    tl_cell_pos_y = %d\n", world->tl_cell_pos_y);
+                fprintf(stderr, "    total rows    = %d\n", world->rows);
+                fprintf(stderr, "    total cols    = %d\n", world->cols);
+
                 return;
             }
             cell_pos[0] = top_left[0] + cell_spacing * c;

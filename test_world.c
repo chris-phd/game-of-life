@@ -42,6 +42,7 @@ int main(void) {
         return -1;
     }
 
+    // Test the world resizing in both x and y dir
     char world_file_3[] = "../resources/test_world_3.txt";
     if (!worldLoadFromFile(world, world_file_3)) {
         fprintf(stderr, "test_world: worldLoadFromFile  FAILED\n");
@@ -64,11 +65,33 @@ int main(void) {
         worldDestroy(world);
         return -1;
     }
-    
-    worldDestroy(world);
 
-    // Should test a drifer before to see what happens when I need to reallocate on 
-    // every step
+    // Test the world resizing only in the y dir
+    char world_file_4[] = "../resources/test_world_4.txt";
+    if (!worldLoadFromFile(world, world_file_4)) {
+        fprintf(stderr, "test_world: worldLoadFromFile  FAILED\n");
+        worldDestroy(world);
+        return -1;
+    }
+    worldPrint(world);
+    rows_initial = world->rows;
+    cols_initial = world->cols;
+    
+    if (!worldUpdate(world)) {
+        fprintf(stderr, "test_world: worldUpdate    FAILED\n");
+        worldDestroy(world);
+        return -1;
+    }
+    worldPrint(world);
+    if (world->rows != rows_initial + 1 && world->cols != cols_initial) {
+        fprintf(stderr, "test_world: worldUpdate ran but failed to increase world size\n");
+        fprintf(stderr, "test_world: worldUpdate    FAILED\n");
+        worldDestroy(world);
+        return -1;
+    }
+
+
+    worldDestroy(world);
 
     fprintf(stderr, "test_world: All tests PASSED\n");
     return 0;

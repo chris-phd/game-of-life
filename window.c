@@ -110,7 +110,7 @@ int windowInit() {
     glfwSetMouseButtonCallback(window.handle, mouseButtonCallback);
     glfwSetScrollCallback(window.handle, mouseScrollCallback);
 
-    window.mouse.scroll = 10.0;
+    window.mouse.scroll = 50.0;
 
     return 1;
 }
