@@ -242,6 +242,9 @@ static void handleMoveCommands(struct Renderer *self) {
     float dx = 0.0f;
     float dy = 0.0f;
 
+    if ((window.keyboard.keys[GLFW_KEY_LEFT_SHIFT].pressed || window.keyboard.keys[GLFW_KEY_RIGHT_SHIFT].pressed))
+        return;
+
     if (window.keyboard.keys[GLFW_KEY_W].pressed || window.keyboard.keys[GLFW_KEY_UP].pressed)
         dy += speed;
 
@@ -263,14 +266,29 @@ static void handleMoveCommands(struct Renderer *self) {
 
 static void handleWorldCommands(struct World *world) {
     
-    // Pause/Unpause world updates
+    // Pause/unpause world updates
     if (window.keyboard.keys[GLFW_KEY_SPACE].pressed) {
         if (world->updates_paused)
             world->updates_paused = 0;
         else
             world->updates_paused = 1;
-   
     }
+
+    // Speedup/slowdown world updates
+    if ((window.keyboard.keys[GLFW_KEY_LEFT_SHIFT].pressed || window.keyboard.keys[GLFW_KEY_RIGHT_SHIFT].pressed)) {
+        if (window.keyboard.keys[GLFW_KEY_W].pressed || window.keyboard.keys[GLFW_KEY_UP].pressed) {
+            world->update_rate.ticks_per_sec += 0.2f;
+            if (world->update_rate.ticks_per_sec > 20.0f)
+                world->update_rate.ticks_per_sec = 20.0f;
+        }
+
+        if (window.keyboard.keys[GLFW_KEY_S].pressed || window.keyboard.keys[GLFW_KEY_DOWN].pressed) {
+            world->update_rate.ticks_per_sec -= 0.2f;
+            if (world->update_rate.ticks_per_sec < 0.6f)
+                world->update_rate.ticks_per_sec = 0.6f;
+        }
+    }
+
 }
 
 void renderWorld(struct Renderer *self, struct World *world) {
