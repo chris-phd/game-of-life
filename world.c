@@ -15,12 +15,14 @@ struct World *worldCreate() {
         return NULL;
     }
     
+    self->block_rows = 16;
+    self->block_cols = 16;
     self->update_rate.ticks_per_sec = 2.0f;
     self->update_rate.last_tick = timeNow();
     self->tl_cell_pos_x = 0;
     self->tl_cell_pos_y = 0;
-    self->rows = 20;
-    self->cols = 20;
+    self->rows = self->block_rows;
+    self->cols = self->block_cols;
     self->cells = calloc(self->rows * self->cols, sizeof(unsigned char));
     if (!self->cells) {
         fprintf(stderr, "Failed to allocate memory for the world cells.\n");
@@ -28,9 +30,9 @@ struct World *worldCreate() {
         return NULL;
     }
 
-    self->cn_rows = self->rows + 2;
-    self->cn_cols = self->cols + 2;
-    self->cells_next = calloc(self->cn_rows * self->cn_cols, sizeof(unsigned char));
+    self->cn_rows = self->rows;
+    self->cn_cols = self->cols;
+    self->cells_next = calloc(self->rows * self->cols, sizeof(unsigned char));
     if (!self->cells_next) {
         fprintf(stderr, "Failed to allocate memory for the world cells_next.\n");
         free(self->cells);
@@ -67,9 +69,8 @@ int worldUpdate(struct World *self) {
     int grow_top = 0;
     int grow_bottom = 0;
 
-    // Start from -1 since cells can grow beyond current bounds in this time step
-    for (int r = -1; r <= (int) self->rows; ++r) {
-        for (int c = -1; c <= (int) self-> cols; ++c) {
+    for (int r = 0; r < (int) self->rows; ++r) {
+        for (int c = 0; c < (int) self-> cols; ++c) {
 
             // Current state of the cell
             unsigned char cell = 0;
@@ -92,13 +93,13 @@ int worldUpdate(struct World *self) {
                 unsigned char *cell_next = worldCellNext(self, c, r);
                 *cell_next = 1;
                 
-                if (!grow_top && r == -1)
+                if (!grow_top && r == 0)
                     grow_top = 1;
-                if (!grow_bottom && r == self->rows)
+                if (!grow_bottom && r == self->rows-1)
                     grow_bottom = 1;
-                if (!grow_left && c == -1)
+                if (!grow_left && c == 0)
                     grow_left = 1;
-                if (!grow_right && c == self->cols)
+                if (!grow_right && c == self->cols-1)
                     grow_right = 1;
 
             } else {
@@ -108,32 +109,39 @@ int worldUpdate(struct World *self) {
         }
     }
 
+    int prev_tl_cell_pos_x = self->tl_cell_pos_x;
+    int prev_tl_cell_pos_y = self->tl_cell_pos_y;
+
     // Increase the size of the domain if necessary
     int increase_size = grow_left || grow_right || grow_top || grow_bottom;
     if (increase_size) {
-        fprintf(stderr, "world::worldUpdate: increasing size for the MAIN cells\n");
-        fprintf(stderr, "    prev size: row = %d, cols = %d", self->rows, self->cols);
-        self->rows = self->rows + (unsigned int) (grow_top + grow_bottom);
-        self->cols = self->cols + (unsigned int) (grow_left + grow_right);
-        fprintf(stderr, "    new size: row = %d, cols = %d", self->rows, self->cols);
+        self->rows = self->rows + (unsigned int) (grow_top + grow_bottom) * self->block_rows;
+        self->cols = self->cols + (unsigned int) (grow_left + grow_right) * self->block_cols;
         self->cells = realloc(self->cells, sizeof(unsigned char) * self->rows * self->cols);
-        fprintf(stderr, "    successfully updates\n");
+        
         if (!self->cells) {
             fprintf(stderr, "world::worldUpdate: Error! Failed to allocate memory to increase cells.\n");
             return 0;            
         }
 
+        for (int i = 0; i < self->rows * self->cols; ++i)
+            self->cells[i] = 0;
+
         if (grow_left)
-            --self->tl_cell_pos_x;
+            self->tl_cell_pos_x = self->tl_cell_pos_x - self->block_cols;
         if (grow_top)
-            --self->tl_cell_pos_y;
+            self->tl_cell_pos_y = self->tl_cell_pos_y - self->block_rows;
     }
 
     // Copy the next cells to the current cells
-    for (int r = 0; r < self->rows; ++r) {
-        for (int c = 0; c < self->cols; ++c) {
-            unsigned char *cell = worldCell(self, r, c);
-            unsigned char *cell_next = worldCellNext(self, r - grow_top, c - grow_left);
+    int col_offset = prev_tl_cell_pos_x - self->tl_cell_pos_x;
+    int row_offset = prev_tl_cell_pos_y - self->tl_cell_pos_y;
+    fprintf(stderr, "    row_offset = %d, col_offset = %d\n", row_offset, col_offset);
+    fprintf(stderr, "    cn_rows = %d, cn_cols = %d\n", self->cn_rows, self->cn_cols);
+    for (int r = 0; r < self->cn_rows; ++r) {
+        for (int c = 0; c < self->cn_cols; ++c) {
+            unsigned char *cell = worldCell(self, c + col_offset, r + row_offset);
+            unsigned char *cell_next = worldCellNext(self, c, r);
             *cell = *cell_next;
             *cell_next = 0;
         }
@@ -141,36 +149,28 @@ int worldUpdate(struct World *self) {
 
 
     if (increase_size) {
-        fprintf(stderr, "world::worldUpdate: increasing size\n");
-        fprintf(stderr, "    grow_left   = %d\n", grow_left);
-        fprintf(stderr, "    grow_right  = %d\n", grow_right);
-        fprintf(stderr, "    grow_top    = %d\n", grow_top);
-        fprintf(stderr, "    grow_bottom = %d\n", grow_bottom);
-
-        fprintf(stderr, "    prev size, cn_rows = %d, cn_cols = %d\n", 
-                self->cn_rows, self->cn_cols);
-
-        self->cn_rows = self->cn_rows + (unsigned int) (grow_top + grow_bottom);
-        self->cn_cols = self->cn_cols + (unsigned int) (grow_left + grow_right);
-        
-        fprintf(stderr, "    reallocating size, cn_rows = %d, cn_cols = %d\n", 
-                self->cn_rows, self->cn_cols);
-
-        self->cells_next = realloc(self->cells_next, sizeof(unsigned char) * self->cn_rows * self->cn_cols);
-        
-        fprintf(stderr, "    successfully reallocated\n");
+        self->cn_rows = self->rows;
+        self->cn_cols = self->cols;
+        self->cells_next = realloc(self->cells_next, sizeof(unsigned char) * self->rows * self->cols);
         if (!self->cells_next) {
             fprintf(stderr, "world::worldUpdate: Error! Failed to allocate memory to increase cells_next.\n");
             return 0;            
         }
     }
 
+    if (increase_size) {
+        fprintf(stderr, "    size increased\n");
+        fprintf(stderr, "    self->rows = %d, self->cols = %d\n", self->rows, self->cols);
+        fprintf(stderr, "    self->cn_rows = %d, self->cn_cols = %d\n", self->rows, self->cols);
+        fprintf(stderr, "    gl = %d, gr = %d, gt = %d, gb = %d\n", grow_left, grow_right, grow_top, grow_bottom);
+    }
+
     return 1;
 }
 
-void worldToggleCell(struct World *self, int cell_pos_x, int cell_pos_y) {
+void worldToggleCell(struct World *self, int c, int r) {
     
-    unsigned char *cell = worldCell(self, cell_pos_x, cell_pos_y);
+    unsigned char *cell = worldCell(self, c, r);
     if (!cell)
         return;
 
@@ -183,12 +183,10 @@ void worldToggleCell(struct World *self, int cell_pos_x, int cell_pos_y) {
 
 }
 
-unsigned char *worldCell(struct World *self, int cell_pos_x, int cell_pos_y) {
-    int c = cell_pos_x;
-    int r = cell_pos_y;
-
-    if (!isWithinDomain(self, r, c)) {
+unsigned char *worldCell(struct World *self, int c, int r) {
+    if (!isWithinDomain(self, c, r)) {
         fprintf(stderr, "world::worldCell: Error! Tried to access a cell that does not exist.\n");
+        fprintf(stderr, "    (c = %d, r = %d), (total cols = %d, total rows = %d)\n", c, r, self->cols, self->rows);
         return NULL;
     }
 
@@ -196,22 +194,14 @@ unsigned char *worldCell(struct World *self, int cell_pos_x, int cell_pos_y) {
     return &self->cells[i];
 }
 
-unsigned char *worldCellNext(struct World *self, int cell_pos_x, int cell_pos_y) {
-    // Cell next has an extra row and column on all sides of the cell matrix.
-    // So need to add 1 from the cell pos (which is in the normal cell matrix
-    // reference frame) to get the c and r index in the cell_next frame.
-
-    int c = cell_pos_x + 1;
-    int r = cell_pos_y + 1;
-    
-    if (c >= (int) self->cn_cols || r >= (int) self->cn_rows || c < 0 || r < 0) {
-        fprintf(stderr, "world::worldCellNext: Error! Tried to access a cell_next that does not exist.\n");
+unsigned char *worldCellNext(struct World *self, int c, int r) {
+    if (!isWithinDomain(self, c, r)) {
+        fprintf(stderr, "world::worldCellNext: Error! Tried to access a cell that does not exist.\n");
         return NULL;
     }
 
     int i = ((int) self->cn_cols) * r + c;
     return &self->cells_next[i];
-
 }
 
 int worldLoadFromFile(struct World *self, const char *file_name) {
@@ -283,6 +273,7 @@ void worldPrint(struct World *self) {
             unsigned char *cell = worldCell(self, c, r);
             if (!cell) {
                 fprintf(stderr, "world::worldPrint: Error reading cells at r = %d, c = %d\n", r, c);
+                continue;
             }
             printf("%d ", (int) *cell);
         }

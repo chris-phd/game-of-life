@@ -291,7 +291,7 @@ void renderWorld(struct Renderer *self, struct World *world) {
         for (int c = 0; c < world->cols; ++c) {
             unsigned char *cell = worldCell(world, c, r);
             if (!cell) {
-                fprintf(stderr, "renderer::renderWorld: No value at cell (%d %d)\n", c, r);
+                fprintf(stderr, "renderer::renderWorld: No value at cell (col = %d, row = %d)\n", c, r);
                 fprintf(stderr, "    tl_cell_pos_x = %d\n", world->tl_cell_pos_x);
                 fprintf(stderr, "    tl_cell_pos_y = %d\n", world->tl_cell_pos_y);
                 fprintf(stderr, "    total rows    = %d\n", world->rows);

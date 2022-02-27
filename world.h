@@ -10,7 +10,7 @@ struct World {
     unsigned int rows;
     unsigned int cols;
 
-    // State of the cells on the next time step.
+    // State of cells on the next time step.
     unsigned char *cells_next;
     unsigned int cn_rows;
     unsigned int cn_cols;
@@ -19,15 +19,19 @@ struct World {
     int tl_cell_pos_x;
     int tl_cell_pos_y;
 
+    // Memory for cells is allocated in blocks
+    unsigned int block_rows;
+    unsigned int block_cols;
+
     struct TimeControl update_rate;
 };
 
 struct World *worldCreate();
 void worldDestroy(struct World *self);
 int worldUpdate(struct World *self);
-void worldToggleCell(struct World *self, int cell_pos_x, int cell_pos_y);
-unsigned char *worldCell(struct World *self, int cell_pos_x, int cell_pos_y);
-unsigned char *worldCellNext(struct World *self, int cell_pos_x, int cell_pos_y);
+void worldToggleCell(struct World *self, int c, int r);
+unsigned char *worldCell(struct World *self, int c, int r);
+unsigned char *worldCellNext(struct World *self, int c, int r);
 int worldLoadFromFile(struct World *self, const char *file_name);
 int worldSaveToFile(struct World *self, const char *file_name);
 void worldPrint(struct World *self);
