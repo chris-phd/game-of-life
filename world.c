@@ -19,6 +19,7 @@ struct World *worldCreate() {
     self->block_cols = 16;
     self->update_rate.ticks_per_sec = 2.0f;
     self->update_rate.last_tick = timeNow();
+    self->updates_paused = 0;
     self->tl_cell_pos_x = 0;
     self->tl_cell_pos_y = 0;
     self->rows = self->block_rows;
@@ -59,6 +60,9 @@ static int isWithinDomain(struct World *self, int c, int r) {
 
 int worldUpdate(struct World *self) {
     fprintf(stderr, "world::update_world: \n");
+
+    if (self->updates_paused)
+        return 1;
 
     // 1. Any live cell with two or three live neighbours survives.
     // 2. Any dead cell with three live neighbours becomes a live cell.
@@ -136,8 +140,6 @@ int worldUpdate(struct World *self) {
     // Copy the next cells to the current cells
     int col_offset = prev_tl_cell_pos_x - self->tl_cell_pos_x;
     int row_offset = prev_tl_cell_pos_y - self->tl_cell_pos_y;
-    fprintf(stderr, "    row_offset = %d, col_offset = %d\n", row_offset, col_offset);
-    fprintf(stderr, "    cn_rows = %d, cn_cols = %d\n", self->cn_rows, self->cn_cols);
     for (int r = 0; r < self->cn_rows; ++r) {
         for (int c = 0; c < self->cn_cols; ++c) {
             unsigned char *cell = worldCell(self, c + col_offset, r + row_offset);
@@ -156,13 +158,6 @@ int worldUpdate(struct World *self) {
             fprintf(stderr, "world::worldUpdate: Error! Failed to allocate memory to increase cells_next.\n");
             return 0;            
         }
-    }
-
-    if (increase_size) {
-        fprintf(stderr, "    size increased\n");
-        fprintf(stderr, "    self->rows = %d, self->cols = %d\n", self->rows, self->cols);
-        fprintf(stderr, "    self->cn_rows = %d, self->cn_cols = %d\n", self->rows, self->cols);
-        fprintf(stderr, "    gl = %d, gr = %d, gt = %d, gb = %d\n", grow_left, grow_right, grow_top, grow_bottom);
     }
 
     return 1;

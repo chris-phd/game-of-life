@@ -261,9 +261,21 @@ static void handleMoveCommands(struct Renderer *self) {
     }
 }
 
+static void handleWorldCommands(struct World *world) {
+    
+    // Pause/Unpause world updates
+    if (window.keyboard.keys[GLFW_KEY_SPACE].pressed) {
+        if (world->updates_paused)
+            world->updates_paused = 0;
+        else
+            world->updates_paused = 1;
+   
+    }
+}
+
 void renderWorld(struct Renderer *self, struct World *world) {
     handleMoveCommands(self);
-
+    handleWorldCommands(world);
 
     // Is is possible to avoid doing this every loop, and do only when the
     // aspect ratio changes?

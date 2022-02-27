@@ -24,6 +24,7 @@ struct World {
     unsigned int block_cols;
 
     struct TimeControl update_rate;
+    int updates_paused;
 };
 
 struct World *worldCreate();
