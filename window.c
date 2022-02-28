@@ -34,6 +34,7 @@ static void mouseButtonCallback(GLFWwindow *handle, int button, int action, int 
             break;
         case GLFW_RELEASE:
             window.mouse.buttons[button].pressed = 0;
+            window.mouse.buttons[button].held = 0;
             break;
         default:
             break;
@@ -52,7 +53,8 @@ static void mouseScrollCallback(GLFWwindow *handle, double xoffset, double yoffs
         
 }
 
-static void keyCallback(GLFWwindow *handle, int key, int scancode, int action, int mods) {
+static void keyCallback(GLFWwindow *handle, int key, int scancode, int action, int mods) 
+{
     if (key < 0)
         return;
 
@@ -64,13 +66,36 @@ static void keyCallback(GLFWwindow *handle, int key, int scancode, int action, i
             break;
         case GLFW_RELEASE:
             window.keyboard.keys[key].pressed = 0;
+            window.keyboard.keys[key].held = 0;
             break;
         default:
             break;
     }
 }
 
-int windowInit() {
+static void mouseInit() 
+{
+    for (int i = 0; i < GLFW_MOUSE_BUTTON_LAST; ++i) {
+        window.mouse.buttons[i].pressed = 0;
+        window.mouse.buttons[i].held = 0;
+    }
+    window.mouse.scroll = 50.0;
+    window.mouse.pos_x = 0.0;
+    window.mouse.pos_y = 0.0;
+    window.mouse.dx = 0.0;
+    window.mouse.dy = 0.0;
+}
+
+static void keyboardInit()
+{
+    for (int i = 0; i < GLFW_KEY_LAST; ++i) {
+        window.keyboard.keys[i].pressed = 0;
+        window.keyboard.keys[i].held = 0;
+    }
+}
+
+int windowInit() 
+{
     fprintf(stderr, "window::windowInit: \n");
     
     if (!glfwInit()) {
@@ -110,7 +135,8 @@ int windowInit() {
     glfwSetMouseButtonCallback(window.handle, mouseButtonCallback);
     glfwSetScrollCallback(window.handle, mouseScrollCallback);
 
-    window.mouse.scroll = 50.0;
+    mouseInit();
+    keyboardInit();
 
     return 1;
 }

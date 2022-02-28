@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // Main Looo
+    // Main Loop
     windowLoop(renderer, world);
 
     cleanup(renderer, world);

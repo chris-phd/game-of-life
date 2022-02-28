@@ -10,6 +10,7 @@
 
 struct Button {
     unsigned char pressed;
+    unsigned char held;
 };
 
 struct Mouse {

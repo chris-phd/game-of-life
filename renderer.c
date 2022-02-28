@@ -267,11 +267,14 @@ static void handleMoveCommands(struct Renderer *self) {
 static void handleWorldCommands(struct World *world) {
     
     // Pause/unpause world updates
-    if (window.keyboard.keys[GLFW_KEY_SPACE].pressed) {
+    if (window.keyboard.keys[GLFW_KEY_SPACE].pressed && 
+        !window.keyboard.keys[GLFW_KEY_SPACE].held) {
         if (world->updates_paused)
             world->updates_paused = 0;
         else
             world->updates_paused = 1;
+
+        window.keyboard.keys[GLFW_KEY_SPACE].held = 1;
     }
 
     // Speedup/slowdown world updates
