@@ -122,19 +122,19 @@ static void createVertices(struct Renderer *self) {
         -cell_size, -cell_size,  0.0,
     };
 
-    // One color per vertex. (generated randomly for now)
+    // One color per vertex.
     float alive_cell_color[] = {
-        0.583f,  0.771f,  0.014f,
-        0.609f,  0.115f,  0.436f,
-        0.327f,  0.483f,  0.844f,
-        0.822f,  0.569f,  0.201f
+        0.2784f, 0.5098f, 0.0000f,
+        0.2784f, 0.5098f, 0.0000f,
+        0.2784f, 0.5098f, 0.0000f,
+        0.2784f, 0.5098f, 0.0000f
     };
 
     float dead_cell_color[] = {
-        0.5f, 0.5f, 0.5f,
-        0.5f, 0.5f, 0.5f,
-        0.5f, 0.5f, 0.5f,
-        0.5f, 0.5f, 0.5f
+        0.2f, 0.2f, 0.2f,
+        0.2f, 0.2f, 0.2f,
+        0.2f, 0.2f, 0.2f,
+        0.2f, 0.2f, 0.2f
     };
 
     // A little unecessary for a 2D cell since no vertices are shared.
@@ -183,7 +183,7 @@ struct Renderer *rendererCreate() {
     }
     glUseProgram(self->program_id);
 
-    glClearColor(0.2, 0.3, 0.3, 1.0);
+    glClearColor(0.157f, 0.290f, 0.000f, 1.0f);
 
 
     if (!createTransforms(self)) {
