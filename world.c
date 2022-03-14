@@ -17,9 +17,10 @@ struct World *worldCreate() {
     
     self->block_rows = 16;
     self->block_cols = 16;
-    self->update_rate.ticks_per_sec = 2.0f;
+    self->update_rate.ticks_per_sec = 3.0f;
     self->update_rate.last_tick = timeNow();
     self->updates_paused = 0;
+    self->edit_mode = 0;
     self->tl_cell_pos_x = 0;
     self->tl_cell_pos_y = 0;
     self->rows = self->block_rows;
@@ -59,7 +60,6 @@ static int isWithinDomain(struct World *self, int c, int r) {
 }
 
 int worldUpdate(struct World *self) {
-    fprintf(stderr, "world::update_world: \n");
 
     if (self->updates_paused)
         return 1;

@@ -25,6 +25,7 @@ struct World {
 
     struct TimeControl update_rate;
     int updates_paused;
+    int edit_mode;
 };
 
 struct World *worldCreate();

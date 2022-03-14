@@ -26,8 +26,6 @@ static void mouseButtonCallback(GLFWwindow *handle, int button, int action, int 
     if (button < 0)
         return;
 
-    fprintf(stderr, "window::mouseButtonCallback: button = %d, mouse pos x = %f, mouse pos y = %f\n", button, window.mouse.pos_x, window.mouse.pos_y);
-
     switch (action) {
         case GLFW_PRESS:
             window.mouse.buttons[button].pressed = 1;
@@ -43,7 +41,6 @@ static void mouseButtonCallback(GLFWwindow *handle, int button, int action, int 
 
 static void mouseScrollCallback(GLFWwindow *handle, double xoffset, double yoffset)
 {
-    fprintf(stderr, "window::mouseScrollCallback: scroll = %f \n", window.mouse.scroll);
     window.mouse.scroll += yoffset;
 
     if (window.mouse.scroll > 100.0)
@@ -57,8 +54,6 @@ static void keyCallback(GLFWwindow *handle, int key, int scancode, int action, i
 {
     if (key < 0)
         return;
-
-    fprintf(stderr, "window::keyboardCallback: \n");
 
     switch (action) {
         case GLFW_PRESS:

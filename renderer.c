@@ -44,10 +44,10 @@ static int createTransforms(struct Renderer *self) {
     identityMatrix(model_matrix);
 
     float view_matrix[16];
-    self->eye[0] = 10.0f;
-    self->eye[1] = -10.0f;
+    self->eye[0] = 0.0;//10.0f;
+    self->eye[1] = 0.0;//-10.0f;
     self->eye[2] = 1.0f;
-    float target[] = {0.0f, 0.0f, 0.0f};
+    float target[] = {self->eye[0], self->eye[1], 0.0f};
     float up[] = {0.0f, 1.0f, 0.0f};
     lookDir(self->eye, target, up, view_matrix);
 
@@ -292,6 +292,41 @@ static void handleWorldCommands(struct World *world) {
         }
     }
 
+    // Enter/leave edit mode
+    if (window.keyboard.keys[GLFW_KEY_E].pressed && 
+        !window.keyboard.keys[GLFW_KEY_E].held) {
+        if (world->updates_paused)
+            world->updates_paused = 0;
+        else
+            world->updates_paused = 1;
+
+        if (world->edit_mode)
+            world->edit_mode = 0;
+        else
+            world->edit_mode = 1;
+
+        window.keyboard.keys[GLFW_KEY_E].held = 1;
+    }
+
+
+}
+
+static void handleEditCommands(struct World *world, float left, float right, 
+                               float bottom, float top, const float eye[3]) {
+    
+    // Edit world commands
+    if (world->edit_mode && window.mouse.buttons[GLFW_MOUSE_BUTTON_LEFT].pressed &&
+        !window.mouse.buttons[GLFW_MOUSE_BUTTON_LEFT].held) {
+        
+        window.mouse.buttons[GLFW_MOUSE_BUTTON_LEFT].held = 1;
+
+        float x = window.mouse.pos_x;
+        float y = window.mouse.pos_y;
+        float world_x = eye[0] + 2*(right - left)*(x/window.size_x - 0.5f);
+        float world_y = eye[1] + 2*(bottom - top)*(y/window.size_y - 0.5f);
+        fprintf(stderr, "    pxl_space   = %f, %f\n", x, y);
+        fprintf(stderr, "    world_space = %f, %f\n", world_x, world_y);
+    }
 }
 
 void renderWorld(struct Renderer *self, struct World *world) {
@@ -304,8 +339,11 @@ void renderWorld(struct Renderer *self, struct World *world) {
     float aspect = (float) window.size_x / window.size_y;
     float aspect_inv = 1.0f / aspect;
     float zoom = windowZoom();
-    orthographicProjection(aspect*zoom*-1.0f, aspect*zoom*1.0f, -zoom*1.0f, 
-                           zoom*1.0f, 0.0f, 1000.0f, orthographic_matrix);
+    float right = aspect*zoom;
+    float left = -right;
+    float top = zoom;
+    float bottom = -top;
+    orthographicProjection(left, right, bottom, top, 0.0f, 1000.0f, orthographic_matrix);
     glUniformMatrix4fv(self->projection_matrix_id, 1, GL_FALSE, orthographic_matrix);
 
     
@@ -315,9 +353,11 @@ void renderWorld(struct Renderer *self, struct World *world) {
     lookDir(self->eye, target, up, view_matrix);
     glUniformMatrix4fv(self->view_matrix_id, 1, GL_FALSE, view_matrix);
 
+    handleEditCommands(world, left, right, bottom, top, self->eye);
+
     float cell_spacing = 1.0f;
     float top_left[] = {cell_spacing * (float)world->tl_cell_pos_x, 
-                        cell_spacing * (float)world->tl_cell_pos_y, 
+                        -cell_spacing * (float)world->tl_cell_pos_y, 
                         0.0f};
     float cell_pos[] = {0.0f, 0.0f, 0.0f};
     for (int r = 0; r < world->rows; ++r) {

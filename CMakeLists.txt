@@ -30,3 +30,12 @@ add_executable(test_world
                time_control.c
                fileio.c
                )
+
+
+add_executable(test_matrix
+               test_matrix.c
+               matrix.c
+               )
+
+target_link_libraries(test_matrix
+                      m)
