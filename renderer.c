@@ -312,7 +312,8 @@ static void handleWorldCommands(struct World *world) {
 }
 
 static void handleEditCommands(struct World *world, float left, float right, 
-                               float bottom, float top, const float eye[3]) {
+                               float bottom, float top, const float eye[3],
+                               float cell_spacing, const float top_left_cell[3]) {
     
     // Edit world commands
     if (world->edit_mode && window.mouse.buttons[GLFW_MOUSE_BUTTON_LEFT].pressed &&
@@ -324,8 +325,11 @@ static void handleEditCommands(struct World *world, float left, float right,
         float y = window.mouse.pos_y;
         float world_x = eye[0] + 2*(right - left)*(x/window.size_x - 0.5f);
         float world_y = eye[1] + 2*(bottom - top)*(y/window.size_y - 0.5f);
-        fprintf(stderr, "    pxl_space   = %f, %f\n", x, y);
-        fprintf(stderr, "    world_space = %f, %f\n", world_x, world_y);
+
+        int c = round(((float) round(world_x) - top_left_cell[0]) / cell_spacing);
+        int r = round((top_left_cell[1] - (float) round(world_y)) / cell_spacing);
+
+        worldToggleCell(world, c, r);        
     }
 }
 
@@ -353,13 +357,13 @@ void renderWorld(struct Renderer *self, struct World *world) {
     lookDir(self->eye, target, up, view_matrix);
     glUniformMatrix4fv(self->view_matrix_id, 1, GL_FALSE, view_matrix);
 
-    handleEditCommands(world, left, right, bottom, top, self->eye);
-
     float cell_spacing = 1.0f;
     float top_left[] = {cell_spacing * (float)world->tl_cell_pos_x, 
                         -cell_spacing * (float)world->tl_cell_pos_y, 
                         0.0f};
     float cell_pos[] = {0.0f, 0.0f, 0.0f};
+    handleEditCommands(world, left, right, bottom, top, self->eye, cell_spacing, top_left);
+
     for (int r = 0; r < world->rows; ++r) {
         for (int c = 0; c < world->cols; ++c) {
             unsigned char *cell = worldCell(world, c, r);

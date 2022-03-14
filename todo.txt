@@ -1,7 +1,3 @@
-- working on the edit world commands, converting the pixel coordinates to the world 
-coordinates. Doesn't seem like the view matrix is effecting the world coords? 
-
 - Grow the world (or render an empty cell backgroud) when the camera views the edge of the world
 
-- Add an editting mode?
 - Add a save map function
