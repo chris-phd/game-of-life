@@ -257,7 +257,44 @@ int worldLoadFromFile(struct World *self, const char *file_name) {
 
 int worldSaveToFile(struct World *self, const char *file_name) {
 
-    return 1;
+    // +1 for the new line characters at the end of each row
+    unsigned int size_in_bytes = (self->rows + 1) * self->cols;
+    if (size_in_bytes > 10e6) {
+        fprintf(stderr, "world::worldSaveToFile: World size exceeds file limit.");
+        return 0;
+    }
+
+    char *file_contents = calloc(size_in_bytes, sizeof(char));
+    if (!file_contents) {
+        fprintf(stderr, "world::worldSaveToFile: Failed to create file_contents");
+        return 0;
+    }
+
+    int fc_inx = 0;
+    for (int r = 0; r < self->rows; ++r) {
+        for (int c = 0; c < self->cols; ++c) {
+            unsigned char *cell = worldCell(self, c, r);
+            if (!cell) {
+                fprintf(stderr, "world::worldSaveToFile: Error reading cells at r = %d, c = %d\n", r, c);
+                ++fc_inx;
+                continue;
+            }
+            if (*cell)
+                file_contents[fc_inx] = '1';
+            else
+                file_contents[fc_inx] = '0';
+            
+            ++fc_inx;
+        }
+
+        file_contents[fc_inx] = '\n';
+        ++fc_inx;
+    }
+
+    int success = saveFile(file_name, size_in_bytes, file_contents);    
+    free(file_contents);
+
+    return success;
 }
 
 void worldPrint(struct World *self) {

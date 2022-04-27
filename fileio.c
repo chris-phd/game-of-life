@@ -29,3 +29,22 @@ unsigned int readFile(const char *path, unsigned int max_bytes, char *contents) 
 
     return bytes;
 }
+
+
+int saveFile(const char *path, unsigned int size_in_bytes, char *contents) {
+    if (size_in_bytes == 0)
+        return 0;
+
+
+    FILE *fp;
+    fp = fopen(path, "w");
+    if (!fp) {
+        fprintf(stderr, "Failed to write %s\n", path);
+        return 0;
+    }
+
+    fprintf(fp, "%s", contents);
+
+    fclose(fp);
+    return 0;
+}
