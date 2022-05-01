@@ -55,18 +55,22 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    struct Renderer *renderer;
-    struct World *world;
+    struct Renderer *renderer = NULL;
+    struct World *world = NULL;
     if (!init(&renderer, &world)) {
         cleanup(renderer, world);
         return 1;
     }
+    
 
     if (load_file && !worldLoadFromFile(world, load_file_path)) {
         fprintf(stderr, "Failed to load world file %s\n", load_file_path);
         cleanup(renderer, world);
         return 1;
     }
+    rendererRecenter(renderer, world);
+
+
 
     // Main Loop
     windowLoop(renderer, world);

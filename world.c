@@ -59,6 +59,37 @@ static int isWithinDomain(struct World *self, int c, int r) {
     return r >= 0 && c >= 0 && r < (int) self->rows && c < (int) self->cols;
 }
 
+/// Grows the size of the cells in the specified directions.
+static int worldIncreaseCells(struct World *self, int grow_top, int grow_bottom, int grow_left, int grow_right) {
+    self->rows = self->rows + (unsigned int) (grow_top + grow_bottom) * self->block_rows;
+    self->cols = self->cols + (unsigned int) (grow_left + grow_right) * self->block_cols;
+    self->cells = realloc(self->cells, sizeof(unsigned char) * self->rows * self->cols);
+    
+    if (!self->cells) {
+        fprintf(stderr, "world::worldIncreaseCells: Error! Failed to allocate memory to increase cells.\n");
+        return 0;            
+    }
+
+    for (int i = 0; i < self->rows * self->cols; ++i)
+        self->cells[i] = 0;
+
+    if (grow_left)
+        self->tl_cell_pos_x = self->tl_cell_pos_x - self->block_cols;
+    if (grow_top)
+        self->tl_cell_pos_y = self->tl_cell_pos_y - self->block_rows;
+}
+
+/// Grows cellsNext to match the size of cells. Call after copying cells next into cells.
+static int worldIncreaseCellsNext(struct World *self) {
+    self->cn_rows = self->rows;
+    self->cn_cols = self->cols;
+    self->cells_next = realloc(self->cells_next, sizeof(unsigned char) * self->rows * self->cols);
+    if (!self->cells_next) {
+        fprintf(stderr, "world::worldIncreaseCellsNext: Error! Failed to allocate memory to increase cells_next.\n");
+        return 0;            
+    }
+}
+
 int worldUpdate(struct World *self) {
 
     if (self->updates_paused)
@@ -74,7 +105,7 @@ int worldUpdate(struct World *self) {
     int grow_bottom = 0;
 
     for (int r = 0; r < (int) self->rows; ++r) {
-        for (int c = 0; c < (int) self-> cols; ++c) {
+        for (int c = 0; c < (int) self->cols; ++c) {
 
             // Current state of the cell
             unsigned char cell = 0;
@@ -119,22 +150,8 @@ int worldUpdate(struct World *self) {
     // Increase the size of the domain if necessary
     int increase_size = grow_left || grow_right || grow_top || grow_bottom;
     if (increase_size) {
-        self->rows = self->rows + (unsigned int) (grow_top + grow_bottom) * self->block_rows;
-        self->cols = self->cols + (unsigned int) (grow_left + grow_right) * self->block_cols;
-        self->cells = realloc(self->cells, sizeof(unsigned char) * self->rows * self->cols);
-        
-        if (!self->cells) {
-            fprintf(stderr, "world::worldUpdate: Error! Failed to allocate memory to increase cells.\n");
-            return 0;            
-        }
-
-        for (int i = 0; i < self->rows * self->cols; ++i)
-            self->cells[i] = 0;
-
-        if (grow_left)
-            self->tl_cell_pos_x = self->tl_cell_pos_x - self->block_cols;
-        if (grow_top)
-            self->tl_cell_pos_y = self->tl_cell_pos_y - self->block_rows;
+        if (!worldIncreaseCells(self, grow_top, grow_bottom, grow_left, grow_right))
+            return 0;
     }
 
     // Copy the next cells to the current cells
@@ -151,13 +168,8 @@ int worldUpdate(struct World *self) {
 
 
     if (increase_size) {
-        self->cn_rows = self->rows;
-        self->cn_cols = self->cols;
-        self->cells_next = realloc(self->cells_next, sizeof(unsigned char) * self->rows * self->cols);
-        if (!self->cells_next) {
-            fprintf(stderr, "world::worldUpdate: Error! Failed to allocate memory to increase cells_next.\n");
-            return 0;            
-        }
+        if (!worldIncreaseCellsNext(self))
+            return 0;
     }
 
     return 1;
@@ -210,20 +222,50 @@ int worldLoadFromFile(struct World *self, const char *file_name) {
         return 0;
     }
 
-    int is_first_row = 1;
-    int cols_per_row = 0;
-    int r = 0;
-    int c = 0;
+    // Determine the size of the world in the file.
     unsigned int cell_index = 0;
+    int is_first_row = 1;
+    int num_rows = 1; // The last row may not have a new line character
+    int num_cols = 0;
     while (cell_index != bytes -1) {
         char cell_char = contents[cell_index];
         ++cell_index;
 
-        unsigned char *cell = worldCell(self, c, r);
-        if (!cell) {
-            fprintf(stderr, "world::worldLoadFromFile: Error! World file exceeds maximum rows or cols\n");
-            return 0;
+        if (cell_char == '\n') {
+            if (is_first_row)
+                is_first_row = 0;
+            
+            ++num_rows;
         }
+        if (is_first_row)
+            ++num_cols;
+    }
+
+    fprintf(stderr, "    num rows = %d\n", num_rows);
+    fprintf(stderr, "    num cols = %d\n", num_cols);
+
+    // Increase the size of the world if necessary. Deliberate truncate.
+    int grow_right = (num_cols - (float) self->cols) / (float) self->block_cols;
+    int grow_bottom = (num_rows - (float) self->rows) / (float) self->block_rows;
+    fprintf(stderr, "    grow right  = %d\n", grow_right);
+    fprintf(stderr, "    grow bottom = %d\n", grow_bottom);
+    if (grow_right > 0 || grow_bottom > 0) {
+        if (!worldIncreaseCells(self, 0, grow_bottom, 0, grow_right))
+            return 0;
+
+        if (!worldIncreaseCellsNext(self))
+            return 0;
+    }
+
+    // Copy the state of the world into memory.
+    int cols_per_row = 0;
+    int r = 0;
+    int c = 0;
+    is_first_row = 1;
+    cell_index = 0;
+    while (cell_index != bytes -1) {
+        char cell_char = contents[cell_index];
+        ++cell_index;
 
         if (cell_char == '\n') {
             if (is_first_row) {
@@ -240,15 +282,24 @@ int worldLoadFromFile(struct World *self, const char *file_name) {
             c = 0;
             continue;
 
-        } else if (cell_char == '1') {
-            *cell = 1;
-        } else if (cell_char == '0') {
-            *cell = 0;
         } else {
-            fprintf(stderr, "world::worldLoadFromFile: Error! Invalid char in world file\n");
-            return 0;
-        }
 
+            unsigned char *cell = worldCell(self, c, r);
+            if (!cell) {
+                fprintf(stderr, "world::worldLoadFromFile: Error! World file exceeds maximum rows or cols\n");
+                return 0;
+            }
+
+            if (cell_char == '1') {
+                *cell = 1;
+            } else if (cell_char == '0') {
+                *cell = 0;
+            } else {
+                fprintf(stderr, "world::worldLoadFromFile: Error! Invalid char in world file\n");
+                return 0;
+            }
+
+        } 
         ++c;
     }
 

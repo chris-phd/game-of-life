@@ -8,6 +8,7 @@
 #include <math.h>
 
 #define MAX_SHADER_LEN 4096
+#define CELL_SPACING 1.0f
 
 // Global GLFW window
 extern struct Window window;
@@ -204,6 +205,71 @@ void rendererDestroy(struct Renderer *self) {
     free(self);
 }
 
+static float windowZoom() {
+    return window.mouse.scroll * 0.1f;
+}
+
+static void setWindowZoom(float zoom) {
+    window.mouse.scroll = zoom * 10.0f;
+}
+
+/// Places the center of the screen at the center of the live cells.
+/// Sets zoom so that all occupied squares are visible.
+void rendererRecenter(struct Renderer *self, struct World *world) {
+    if (!self || !world)
+        return;
+
+    // Init min and max to their opposites.
+    float cell_spacing = CELL_SPACING;
+    float max_x = (world->tl_cell_pos_x - 0.5f) * cell_spacing;
+    float max_y = (-world->tl_cell_pos_y - 0.5f) * cell_spacing;
+    float min_x = (world->cols + world->tl_cell_pos_x + 0.5f) * cell_spacing;
+    float min_y = (-world->rows - world->tl_cell_pos_y + 0.5f) * cell_spacing;
+
+    int no_cells_are_live = 1;
+    for (int r = 0; r < world->rows; ++r) {
+        for (int c = 0; c < world->cols; ++c) {
+            unsigned char *cell = worldCell(world, c, r);
+            if (!cell) {
+                fprintf(stderr, "renderer::rendererRecenter: Cell c=%d, r=%d invalid.\n", c, r);
+                continue;
+            }
+
+            if (*cell) {
+                no_cells_are_live = 0;
+
+                float x = ((int) c + world->tl_cell_pos_x) * cell_spacing;
+                float y = -((int) r + world->tl_cell_pos_y) * cell_spacing;
+                if (x - 0.5f*cell_spacing < min_x)
+                    min_x = x - 0.5f*cell_spacing;
+                if (x + 0.5f*cell_spacing > max_x)
+                    max_x = x + 0.5f*cell_spacing;
+                if (y - 0.5f*cell_spacing < min_y)
+                    min_y = y - 0.5f*cell_spacing;
+                if (y + 0.5f*cell_spacing > max_y)
+                    max_y = y + 0.5f*cell_spacing;
+            }
+        }
+    }
+
+    if (no_cells_are_live)
+        return;
+
+    // Set the zoom and eye position so that all occupied squares are visible
+    self->eye[0] = (max_x + min_x) * 0.5f;
+    self->eye[1] = (max_y + min_y) * 0.5f;
+
+    float top = max_y - self->eye[1];
+    float right = max_x - self->eye[0];
+
+    float aspect_inv = window.size_y / window.size_x;
+    float zoom = right * aspect_inv;
+    if (top > zoom)
+        zoom = top;
+
+    setWindowZoom(0.5f*zoom);
+}
+
 // is_alive = when true, cells are rendered solid.
 static void renderCell(struct Renderer *self, float pos[3], int is_alive) {
     float model_matrix[16];
@@ -230,10 +296,6 @@ static void renderCell(struct Renderer *self, float pos[3], int is_alive) {
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(0);
 
-}
-
-static float windowZoom() {
-    return window.mouse.scroll * 0.1f;
 }
 
 static void handleMoveCommands(struct Renderer *self) {
@@ -326,7 +388,7 @@ static void handleEditCommands(struct World *world, float left, float right,
         float world_x = eye[0] + 2*(right - left)*(x/window.size_x - 0.5f);
         float world_y = eye[1] + 2*(bottom - top)*(y/window.size_y - 0.5f);
 
-        int c = round(((float) round(world_x) - top_left_cell[0]) / cell_spacing);
+        int c = round(((float) round(world_x) -     top_left_cell[0]) / cell_spacing);
         int r = round((top_left_cell[1] - (float) round(world_y)) / cell_spacing);
 
         worldToggleCell(world, c, r);        
@@ -357,7 +419,7 @@ void renderWorld(struct Renderer *self, struct World *world) {
     lookDir(self->eye, target, up, view_matrix);
     glUniformMatrix4fv(self->view_matrix_id, 1, GL_FALSE, view_matrix);
 
-    float cell_spacing = 1.0f;
+    float cell_spacing = CELL_SPACING;
     float top_left[] = {cell_spacing * (float)world->tl_cell_pos_x, 
                         -cell_spacing * (float)world->tl_cell_pos_y, 
                         0.0f};

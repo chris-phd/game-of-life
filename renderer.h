@@ -26,6 +26,7 @@ struct Renderer {
 
 struct Renderer *rendererCreate();
 void rendererDestroy(struct Renderer *self);
+void rendererRecenter(struct Renderer *self, struct World *world);
 void renderWorld(struct Renderer *self, struct World *world);
 void renderClear(struct Renderer *self);
 
