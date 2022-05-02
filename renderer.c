@@ -210,7 +210,19 @@ static float windowZoom() {
 }
 
 static void setWindowZoom(float zoom) {
-    window.mouse.scroll = zoom * 10.0f;
+    float scroll = zoom * 10.0f;
+    if (scroll > SCROLL_MAX)
+        scroll = SCROLL_MAX;
+    else if (scroll < SCROLL_MIN)
+        scroll = SCROLL_MIN;
+    window.mouse.scroll = scroll;
+}
+
+static float max(float a, float b) {
+    if (a > b)
+        return a;
+
+    return b;
 }
 
 /// Places the center of the screen at the center of the live cells.
@@ -261,13 +273,97 @@ void rendererRecenter(struct Renderer *self, struct World *world) {
 
     float top = max_y - self->eye[1];
     float right = max_x - self->eye[0];
-
-    float aspect_inv = window.size_y / window.size_x;
-    float zoom = right * aspect_inv;
-    if (top > zoom)
-        zoom = top;
+    float aspect_inv = ((float) window.size_y) / window.size_x;
+    float zoom = max(top, right*aspect_inv);
 
     setWindowZoom(0.5f*zoom);
+}
+
+int rendererGrowWorldToFillView(struct Renderer *self, struct World *world) {
+
+    float aspect = ((float) window.size_x) / window.size_y;
+    float top = 2.0f * windowZoom();
+    float right = aspect * 2.0f * windowZoom();
+
+    float max_x = self->eye[0] + right;
+    float min_x = self->eye[0] - right;
+    float max_y = self->eye[1] + top;
+    float min_y = self->eye[1] - top;
+
+    float cell_spacing_inv = 1.0f / CELL_SPACING;
+    int visible_tl_cell_pos_x = min_x * cell_spacing_inv;
+    int visible_tl_cell_pos_y = -max_y * cell_spacing_inv;
+    int visible_br_cell_pos_x = (int) max_x * cell_spacing_inv + 1;
+    int visible_br_cell_pos_y = (int) -min_y * cell_spacing_inv + 1;
+
+//    fprintf(stderr, "    tl cell pos x= %d\n", world->tl_cell_pos_x);
+//    fprintf(stderr, "    tl cell pos y= %d\n", world->tl_cell_pos_y);
+//    fprintf(stderr, "    visible tl x = %d\n", visible_tl_cell_pos_x);
+//    fprintf(stderr, "    visible tl y = %d\n", visible_tl_cell_pos_y);
+//    fprintf(stderr, "    visible br x = %d\n", visible_br_cell_pos_x);
+//    fprintf(stderr, "    visible br y = %d\n", visible_br_cell_pos_y);
+
+    float block_cols_inv = 1.0f / world->block_cols;
+    float block_rows_inv = 1.0f / world->block_rows;
+    float grow_left = ((float) world->tl_cell_pos_x - visible_tl_cell_pos_x) * block_cols_inv; // so if the difference is less than one block size, then no new space is allocated..
+    float grow_right = ((float) visible_br_cell_pos_x - world->tl_cell_pos_x - world->cols) * block_cols_inv; // Need to increase by 1 if grow left is at all positive, cant truncate.
+    float grow_top = ((float) world->tl_cell_pos_y - visible_tl_cell_pos_y) * block_rows_inv;
+    float grow_bottom = ((float) visible_br_cell_pos_y - world->tl_cell_pos_y - world->rows) * block_rows_inv;
+
+
+    grow_left = ceil(grow_left);
+    grow_right = ceil(grow_right);
+    grow_top = ceil(grow_top);
+    grow_bottom = ceil(grow_bottom);
+    
+    grow_left = max(grow_left, 0.0f);
+    grow_right = max(grow_right, 0.0f);
+    grow_top = max(grow_top, 0.0f);
+    grow_bottom = max(grow_bottom, 0.0f);
+
+//    fprintf(stderr, "    grow_left   = %d\n", (int) grow_left);
+//    fprintf(stderr, "    grow_right  = %d\n", (int) grow_right);
+//    fprintf(stderr, "    grow_top    = %d\n", (int) grow_top);
+//    fprintf(stderr, "    grow_bottom = %d\n", (int) grow_bottom);
+    if (grow_left > 0 || grow_right > 0 || grow_top > 0 || grow_bottom > 0) {
+
+        int prev_tl_cell_pos_x = world->tl_cell_pos_x;
+        int prev_tl_cell_pos_y = world->tl_cell_pos_y;
+        
+        // Backup the existing state of the cells
+        for (int r = 0; r < world->cn_rows; ++r) {
+            for (int c = 0; c < world->cn_cols; ++c) {
+                unsigned char *cell = worldCell(world, c, r);
+                unsigned char *cell_next = worldCellNext(world, c, r);
+                *cell_next = *cell;
+                *cell = 0;
+            }
+        }
+
+        if (!worldIncreaseCells(world, grow_top, grow_bottom, grow_left, grow_right))
+            return 0;
+
+        // TODO: reduce code repeition with world update
+        // Copy the next cells to the current cells
+        int col_offset = prev_tl_cell_pos_x - world->tl_cell_pos_x;
+        int row_offset = prev_tl_cell_pos_y - world->tl_cell_pos_y;
+
+        fprintf(stderr, "    col offset = %d\n", col_offset);
+        fprintf(stderr, "    row offset = %d\n", row_offset);
+        for (int r = 0; r < world->cn_rows; ++r) {
+            for (int c = 0; c < world->cn_cols; ++c) {
+                unsigned char *cell = worldCell(world, c + col_offset, r + row_offset);
+                unsigned char *cell_next = worldCellNext(world, c, r);
+                *cell = *cell_next;
+                *cell_next = 0;
+            }
+        }
+
+        if (!worldIncreaseCellsNext(world))
+            return 0;
+    }
+
+    return 1;
 }
 
 // is_alive = when true, cells are rendered solid.

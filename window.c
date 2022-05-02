@@ -43,10 +43,10 @@ static void mouseScrollCallback(GLFWwindow *handle, double xoffset, double yoffs
 {
     window.mouse.scroll += yoffset;
 
-    if (window.mouse.scroll > 100.0)
-        window.mouse.scroll = 100.0;
-    else if (window.mouse.scroll < 1.0)
-        window.mouse.scroll = 1.0;
+    if (window.mouse.scroll > SCROLL_MAX)
+        window.mouse.scroll = SCROLL_MAX;
+    else if (window.mouse.scroll < SCROLL_MIN)
+        window.mouse.scroll = SCROLL_MIN;
         
 }
 
@@ -156,6 +156,7 @@ void windowLoop(struct Renderer *renderer, struct World *world) {
         renderClear(renderer);
         renderWorld(renderer, world);
         glfwSwapBuffers(window.handle);
+        rendererGrowWorldToFillView(renderer, world);
 
         if (hasNextTickPassed(&world->update_rate))
             worldUpdate(world);

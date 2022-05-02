@@ -8,6 +8,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#define SCROLL_MAX 200.0f
+#define SCROLL_MIN 1.0f
+
 struct Button {
     unsigned char pressed;
     unsigned char held;

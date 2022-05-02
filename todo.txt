@@ -1,4 +1,2 @@
 - Grow the world (or render an empty cell backgroud) when the camera views the edge of the world
-- when loading a file, place the eye position over the occupied squares, so that all live squares are visible..
-
 - Add different colors --color vapourwave / terminal / technicolor

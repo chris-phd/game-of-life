@@ -69,8 +69,11 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     rendererRecenter(renderer, world);
-
-
+    if (!rendererGrowWorldToFillView(renderer, world)) {
+        cleanup(renderer, world);
+        return 1;
+    }
+        
 
     // Main Loop
     windowLoop(renderer, world);

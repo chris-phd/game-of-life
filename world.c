@@ -60,7 +60,7 @@ static int isWithinDomain(struct World *self, int c, int r) {
 }
 
 /// Grows the size of the cells in the specified directions.
-static int worldIncreaseCells(struct World *self, int grow_top, int grow_bottom, int grow_left, int grow_right) {
+int worldIncreaseCells(struct World *self, int grow_top, int grow_bottom, int grow_left, int grow_right) {
     self->rows = self->rows + (unsigned int) (grow_top + grow_bottom) * self->block_rows;
     self->cols = self->cols + (unsigned int) (grow_left + grow_right) * self->block_cols;
     self->cells = realloc(self->cells, sizeof(unsigned char) * self->rows * self->cols);
@@ -80,7 +80,7 @@ static int worldIncreaseCells(struct World *self, int grow_top, int grow_bottom,
 }
 
 /// Grows cellsNext to match the size of cells. Call after copying cells next into cells.
-static int worldIncreaseCellsNext(struct World *self) {
+int worldIncreaseCellsNext(struct World *self) {
     self->cn_rows = self->rows;
     self->cn_cols = self->cols;
     self->cells_next = realloc(self->cells_next, sizeof(unsigned char) * self->rows * self->cols);
@@ -157,6 +157,10 @@ int worldUpdate(struct World *self) {
     // Copy the next cells to the current cells
     int col_offset = prev_tl_cell_pos_x - self->tl_cell_pos_x;
     int row_offset = prev_tl_cell_pos_y - self->tl_cell_pos_y;
+
+    fprintf(stderr, "    col offset = %d\n", col_offset);
+    fprintf(stderr, "    row offset = %d\n", row_offset);
+
     for (int r = 0; r < self->cn_rows; ++r) {
         for (int c = 0; c < self->cn_cols; ++c) {
             unsigned char *cell = worldCell(self, c + col_offset, r + row_offset);
@@ -241,15 +245,15 @@ int worldLoadFromFile(struct World *self, const char *file_name) {
             ++num_cols;
     }
 
-    fprintf(stderr, "    num rows = %d\n", num_rows);
-    fprintf(stderr, "    num cols = %d\n", num_cols);
-
     // Increase the size of the world if necessary. Deliberate truncate.
     int grow_right = (num_cols - (float) self->cols) / (float) self->block_cols;
     int grow_bottom = (num_rows - (float) self->rows) / (float) self->block_rows;
-    fprintf(stderr, "    grow right  = %d\n", grow_right);
-    fprintf(stderr, "    grow bottom = %d\n", grow_bottom);
     if (grow_right > 0 || grow_bottom > 0) {
+        if (grow_right < 0)
+            grow_right = 0;
+        if (grow_bottom < 0)
+            grow_bottom = 0;
+
         if (!worldIncreaseCells(self, 0, grow_bottom, 0, grow_right))
             return 0;
 
