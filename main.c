@@ -6,7 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int init(struct Renderer **renderer, struct World **world);
+int init(struct Renderer **renderer, struct World **world, enum ColorScheme cs);
 void cleanup(struct Renderer *renderer, struct World *world);
 void printUsage();
 
@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     char load_file_path[256];
     int save_file = 0;
     char save_file_path[256];
-    int colour_scheme = 0; // 0 = terminal, 1 = vapourwave, 2 = technicolor
+    enum ColorScheme color_scheme = Terminal;
 
     int opt;
     while ((opt = getopt(argc, argv, "l:s:c:")) != -1) {
@@ -36,11 +36,11 @@ int main(int argc, char *argv[]) {
                 break;
             case 'c':
                 if (strcmp(optarg, "terminal") == 0)
-                    colour_scheme = 0;
-                else if (strcmp(optarg, "vaporwave") == 0)
-                    colour_scheme = 1;
-                else if (strcmp(optarg, "technicolor") == 0)
-                    colour_scheme = 2;
+                    color_scheme = Terminal;
+                else if (strcmp(optarg, "light") == 0)
+                    color_scheme = Light;
+                else if (strcmp(optarg, "grayscale") == 0)
+                    color_scheme = Grayscale;
 
                 break;
             case ':':
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
 
     struct Renderer *renderer = NULL;
     struct World *world = NULL;
-    if (!init(&renderer, &world)) {
+    if (!init(&renderer, &world, color_scheme)) {
         cleanup(renderer, world);
         return 1;
     }
@@ -86,20 +86,20 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-int init(struct Renderer **renderer, struct World **world) {
+int init(struct Renderer **renderer, struct World **world, enum ColorScheme color_scheme) {
 
     if (!windowInit()) {
         fprintf(stderr, "Failed to setup window.\n");
         return 0;
     }
 
-    *renderer = rendererCreate();
+    *renderer = rendererCreate(color_scheme);
     if (!(*renderer)) {
         fprintf(stderr, "Failed to create the renderer.\n");
         return 0;
     }
 
-    *world = worldCreate();
+    *world = worldCreate(color_scheme);
     if (!(*world)) {
         fprintf(stderr, "Failed to create world.\n");
         return 0;

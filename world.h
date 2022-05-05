@@ -40,5 +40,4 @@ void worldPrint(struct World *self);
 int worldIncreaseCells(struct World *self, int grow_top, int grow_bottom, int grow_left, int grow_right);
 int worldIncreaseCellsNext(struct World *self);
 
-
 #endif // __GAME_OF_LIFE_WORLD_H__

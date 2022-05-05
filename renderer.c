@@ -112,7 +112,7 @@ GLuint createShaderProgram(const char *vs_path, const char *fs_path) {
     return program_id;
 }
 
-static void createVertices(struct Renderer *self) {
+static void createVertices(struct Renderer *self, enum ColorScheme cs) {
 
     // Cell vertices in local coords
     float cell_size = 0.49;
@@ -123,19 +123,28 @@ static void createVertices(struct Renderer *self) {
         -cell_size, -cell_size,  0.0,
     };
 
+    float alive_r[] = {0.278f, 0.753f, 0.7};
+    float alive_g[] = {0.510f, 0.004f, 0.7};
+    float alive_b[] = {0.000f, 0.882f, 0.7};
+
+
     // One color per vertex.
     float alive_cell_color[] = {
-        0.2784f, 0.5098f, 0.0000f,
-        0.2784f, 0.5098f, 0.0000f,
-        0.2784f, 0.5098f, 0.0000f,
-        0.2784f, 0.5098f, 0.0000f
+        alive_r[cs], alive_g[cs], alive_b[cs],
+        alive_r[cs], alive_g[cs], alive_b[cs],
+        alive_r[cs], alive_g[cs], alive_b[cs],
+        alive_r[cs], alive_g[cs], alive_b[cs]
     };
 
+    float dead_r[] = {0.200f, 0.941f, 0.180f};
+    float dead_g[] = {0.200f, 0.914f, 0.180f};
+    float dead_b[] = {0.200f, 0.867f, 0.180f};
+
     float dead_cell_color[] = {
-        0.2f, 0.2f, 0.2f,
-        0.2f, 0.2f, 0.2f,
-        0.2f, 0.2f, 0.2f,
-        0.2f, 0.2f, 0.2f
+        dead_r[cs], dead_g[cs], dead_b[cs],
+        dead_r[cs], dead_g[cs], dead_b[cs],
+        dead_r[cs], dead_g[cs], dead_b[cs],
+        dead_r[cs], dead_g[cs], dead_b[cs]
     };
 
     // A little unecessary for a 2D cell since no vertices are shared.
@@ -166,7 +175,7 @@ static void createVertices(struct Renderer *self) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(dead_cell_color), dead_cell_color, GL_STATIC_DRAW);
 }
 
-struct Renderer *rendererCreate() {
+struct Renderer *rendererCreate(enum ColorScheme cs) {
     fprintf(stderr, "renderer::rendererCreate: \n");
 
     struct Renderer *self = malloc(sizeof(struct Renderer));
@@ -184,7 +193,11 @@ struct Renderer *rendererCreate() {
     }
     glUseProgram(self->program_id);
 
-    glClearColor(0.157f, 0.290f, 0.000f, 1.0f);
+    float clear_r[] = {0.157f, 0.902f, 0.450f};
+    float clear_g[] = {0.290f, 0.282f, 0.450f};
+    float clear_b[] = {0.000f, 0.623f, 0.450f};
+
+    glClearColor(clear_r[cs], clear_g[cs], clear_b[cs], 1.0f);
 
 
     if (!createTransforms(self)) {
@@ -192,7 +205,7 @@ struct Renderer *rendererCreate() {
         return NULL;
     }
 
-    createVertices(self);
+    createVertices(self, cs);
 
     return self;
 }

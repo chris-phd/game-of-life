@@ -6,6 +6,12 @@
 #include <glad/glad.h>  // OpenGL loading library. Must be included before glfw
 #include <GLFW/glfw3.h> // Multiplatform library for OpenGL
 
+enum ColorScheme {
+    Terminal = 0,
+    Light,
+    Grayscale
+};
+
 struct Renderer {
    
     GLuint program_id;
@@ -24,7 +30,7 @@ struct Renderer {
     GLuint projection_matrix_id;
 };
 
-struct Renderer *rendererCreate();
+struct Renderer *rendererCreate(enum ColorScheme color_scheme);
 void rendererDestroy(struct Renderer *self);
 void rendererRecenter(struct Renderer *self, struct World *world);
 int rendererGrowWorldToFillView(struct Renderer *self, struct World *world);
