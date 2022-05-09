@@ -9,13 +9,12 @@
 int init(struct Renderer **renderer, struct World **world, enum ColorScheme cs);
 void cleanup(struct Renderer *renderer, struct World *world);
 void printUsage();
+void printControls();
 
 // Global GLFW window
 extern struct Window window;
 
 int main(int argc, char *argv[]) {
-
-    fprintf(stderr, "main: \n");
 
     int load_file = 0;
     char load_file_path[256];
@@ -73,7 +72,7 @@ int main(int argc, char *argv[]) {
         cleanup(renderer, world);
         return 1;
     }
-        
+    printControls();
 
     // Main Loop
     windowLoop(renderer, world);
@@ -115,5 +114,14 @@ void cleanup(struct Renderer *renderer, struct World *world) {
 }
 
 void printUsage() {
-    fprintf(stderr, "./game_of_life -l load_file_path -s save_file_path -c [terminal, vaporwave, technicolor]");
+    fprintf(stderr, "./game_of_life -l load_file_path -s save_file_path -c [terminal, vaporwave, grayscale]");
+}
+
+void printControls() {
+    fprintf(stderr, "  Move      = arrows keys or wasd\n");
+    fprintf(stderr, "  Zoom      = scroll wheel\n");
+    fprintf(stderr, "  Edit mode = e or space\n");
+    fprintf(stderr, "  Edit cell = left mouse when in edit mode\n");
+    fprintf(stderr, "  Speed up  = shift + w or shift + up arrow\n");
+    fprintf(stderr, "  Slow down = shift + s or shift + down arrow\n");
 }

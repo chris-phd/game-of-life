@@ -35,7 +35,6 @@ static GLuint createShader(const char *shader_source, GLenum shader_type) {
 /// Creates the transform matrices used for rendering objects in the correct location
 /// and perspective. Returns 1 if successful, 0 on failure.
 static int createTransforms(struct Renderer *self) {
-    fprintf(stderr, "renderer::createTransforms: \n");
 
     self->model_matrix_id = glGetUniformLocation(self->program_id, "m");
     self->view_matrix_id = glGetUniformLocation(self->program_id, "v");
@@ -176,7 +175,6 @@ static void createVertices(struct Renderer *self, enum ColorScheme cs) {
 }
 
 struct Renderer *rendererCreate(enum ColorScheme cs) {
-    fprintf(stderr, "renderer::rendererCreate: \n");
 
     struct Renderer *self = malloc(sizeof(struct Renderer));
     if (!self) {
@@ -211,7 +209,6 @@ struct Renderer *rendererCreate(enum ColorScheme cs) {
 }
 
 void rendererDestroy(struct Renderer *self) {
-    fprintf(stderr, "renderer::rendererDestroy: \n");
     if (!self)
         return;
 
@@ -361,8 +358,6 @@ int rendererGrowWorldToFillView(struct Renderer *self, struct World *world) {
         int col_offset = prev_tl_cell_pos_x - world->tl_cell_pos_x;
         int row_offset = prev_tl_cell_pos_y - world->tl_cell_pos_y;
 
-        fprintf(stderr, "    col offset = %d\n", col_offset);
-        fprintf(stderr, "    row offset = %d\n", row_offset);
         for (int r = 0; r < world->cn_rows; ++r) {
             for (int c = 0; c < world->cn_cols; ++c) {
                 unsigned char *cell = worldCell(world, c + col_offset, r + row_offset);
@@ -436,17 +431,6 @@ static void handleMoveCommands(struct Renderer *self) {
 }
 
 static void handleWorldCommands(struct World *world) {
-    
-    // Pause/unpause world updates
-    if (window.keyboard.keys[GLFW_KEY_SPACE].pressed && 
-        !window.keyboard.keys[GLFW_KEY_SPACE].held) {
-        if (world->updates_paused)
-            world->updates_paused = 0;
-        else
-            world->updates_paused = 1;
-
-        window.keyboard.keys[GLFW_KEY_SPACE].held = 1;
-    }
 
     // Speedup/slowdown world updates
     if ((window.keyboard.keys[GLFW_KEY_LEFT_SHIFT].pressed || window.keyboard.keys[GLFW_KEY_RIGHT_SHIFT].pressed)) {
@@ -464,8 +448,8 @@ static void handleWorldCommands(struct World *world) {
     }
 
     // Enter/leave edit mode
-    if (window.keyboard.keys[GLFW_KEY_E].pressed && 
-        !window.keyboard.keys[GLFW_KEY_E].held) {
+    if ((window.keyboard.keys[GLFW_KEY_E].pressed && !window.keyboard.keys[GLFW_KEY_E].held) ||
+        (window.keyboard.keys[GLFW_KEY_SPACE].pressed && !window.keyboard.keys[GLFW_KEY_SPACE].held)) {
         if (world->updates_paused)
             world->updates_paused = 0;
         else

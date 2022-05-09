@@ -1,2 +1,4 @@
-- Grow the world (or render an empty cell backgroud) when the camera views the edge of the world
-- Add different colors --color vapourwave / terminal / technicolor
+- remove debug prints
+- print control information to standartd out
+- make some cool shapes and get some screenshots
+- add a README, including build instructions for ubuntu linux

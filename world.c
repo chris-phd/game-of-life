@@ -7,7 +7,6 @@
 #define MAX_WORLD_FILE_BYTES 8192
 
 struct World *worldCreate() {
-    fprintf(stderr, "world::worldCreate: \n");
 
     struct World *self = malloc(sizeof(struct World));
     if (!self) {
@@ -46,7 +45,6 @@ struct World *worldCreate() {
 }
 
 void worldDestroy(struct World *self) {
-    fprintf(stderr, "world::worldDestroy: \n");
     if (!self)
         return;
     
@@ -158,9 +156,6 @@ int worldUpdate(struct World *self) {
     int col_offset = prev_tl_cell_pos_x - self->tl_cell_pos_x;
     int row_offset = prev_tl_cell_pos_y - self->tl_cell_pos_y;
 
-    fprintf(stderr, "    col offset = %d\n", col_offset);
-    fprintf(stderr, "    row offset = %d\n", row_offset);
-
     for (int r = 0; r < self->cn_rows; ++r) {
         for (int c = 0; c < self->cn_cols; ++c) {
             unsigned char *cell = worldCell(self, c + col_offset, r + row_offset);
@@ -216,8 +211,6 @@ unsigned char *worldCellNext(struct World *self, int c, int r) {
 }
 
 int worldLoadFromFile(struct World *self, const char *file_name) {
-    fprintf(stderr, "world::worldLoadFromFile: \n");
-
 
     char contents[MAX_WORLD_FILE_BYTES];
     unsigned int bytes = readFile(file_name, MAX_WORLD_FILE_BYTES, contents);
@@ -353,8 +346,6 @@ int worldSaveToFile(struct World *self, const char *file_name) {
 }
 
 void worldPrint(struct World *self) {
-    fprintf(stderr, "world::printWorld: \n");
-
     for (int r = 0; r < self->rows; ++r) {
         for (int c = 0; c < self->cols; ++c) {
             unsigned char *cell = worldCell(self, c, r);

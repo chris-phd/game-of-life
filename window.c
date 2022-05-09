@@ -91,8 +91,6 @@ static void keyboardInit()
 
 int windowInit() 
 {
-    fprintf(stderr, "window::windowInit: \n");
-    
     if (!glfwInit()) {
         fprintf(stderr, "Failed to initialise GLEW.\n");
         return 0;
@@ -137,8 +135,6 @@ int windowInit()
 }
 
 void windowCleanup() {
-    fprintf(stderr, "window::windowCleanup: \n");
-
     glfwTerminate();
 }
 
@@ -148,8 +144,6 @@ void windowProcessInput() {
 }
 
 void windowLoop(struct Renderer *renderer, struct World *world) {
-    fprintf(stderr, "window::windowLoop: \n");
-
     while (!glfwWindowShouldClose(window.handle)) {
         
         windowProcessInput();
