@@ -74,7 +74,7 @@ static void mouseInit()
         window.mouse.buttons[i].pressed = 0;
         window.mouse.buttons[i].held = 0;
     }
-    window.mouse.scroll = 50.0;
+    window.mouse.scroll = 10.0;
     window.mouse.pos_x = 0.0;
     window.mouse.pos_y = 0.0;
     window.mouse.dx = 0.0;
