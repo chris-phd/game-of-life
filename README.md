@@ -33,6 +33,6 @@ To load the examples. From the build directory:
 
 ![Glider Train](resources/images/glider_train.png?raw=true)
 
-![Time Bomb](resources/images/glider_train.png?raw=true)
+![Time Bomb](resources/images/time_bomb.png?raw=true)
 
 ![Gosper GLider Gun](resources/images/gosper_glider_gun.png?raw=true)
