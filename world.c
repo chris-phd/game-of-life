@@ -3,8 +3,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
-#define MAX_WORLD_FILE_BYTES 8192
+#define MAX_WORLD_FILE_BYTES 16384
 
 struct World *worldCreate() {
 
@@ -16,7 +17,7 @@ struct World *worldCreate() {
     
     self->block_rows = 16;
     self->block_cols = 16;
-    self->update_rate.ticks_per_sec = 3.0f;
+    self->update_rate.ticks_per_sec = 12.0f;
     self->update_rate.last_tick = timeNow();
     self->updates_paused = 0;
     self->edit_mode = 0;
@@ -239,8 +240,8 @@ int worldLoadFromFile(struct World *self, const char *file_name) {
     }
 
     // Increase the size of the world if necessary. Deliberate truncate.
-    int grow_right = (num_cols - (float) self->cols) / (float) self->block_cols;
-    int grow_bottom = (num_rows - (float) self->rows) / (float) self->block_rows;
+    int grow_right = ceil((num_cols - (float) self->cols) / (float) self->block_cols);
+    int grow_bottom = ceil((num_rows - (float) self->rows) / (float) self->block_rows);
     if (grow_right > 0 || grow_bottom > 0) {
         if (grow_right < 0)
             grow_right = 0;
