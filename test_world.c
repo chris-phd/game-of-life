@@ -11,7 +11,7 @@ int main(void) {
     struct World *world = worldCreate();
 
 
-    char world_file_2[] = "../resources/test_world_2.txt";
+    char world_file_2[] = "../resources/tests/test_world_2.txt";
 
     if (!worldLoadFromFile(world, world_file_2)) {
         fprintf(stderr, "test_world: worldLoadFromFile  FAILED\n");
@@ -20,7 +20,7 @@ int main(void) {
     }
 
     worldPrint(world);
-    char world_file_1[] = "../resources/test_world_1.txt";
+    char world_file_1[] = "../resources/tests/test_world_1.txt";
     if (!worldLoadFromFile(world, world_file_1)) {
         fprintf(stderr, "test_world: worldLoadFromFile  FAILED\n");
         worldDestroy(world);
@@ -43,7 +43,7 @@ int main(void) {
     }
 
     // Test the world resizing in both x and y dir
-    char world_file_3[] = "../resources/test_world_3.txt";
+    char world_file_3[] = "../resources/tests/test_world_3.txt";
     if (!worldLoadFromFile(world, world_file_3)) {
         fprintf(stderr, "test_world: worldLoadFromFile  FAILED\n");
         worldDestroy(world);
@@ -71,7 +71,7 @@ int main(void) {
 #if 0 
     struct World *world2 = worldCreate();
     // Test the world resizing only in the y dir
-    char world_file_4[] = "../resources/test_world_4.txt";
+    char world_file_4[] = "../resources/tests/test_world_4.txt";
     if (!worldLoadFromFile(world2, world_file_4)) {
         fprintf(stderr, "test_world: worldLoadFromFile  FAILED\n");
         worldDestroy(world);

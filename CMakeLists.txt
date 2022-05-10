@@ -31,6 +31,8 @@ add_executable(test_world
                fileio.c
                )
 
+target_link_libraries(test_world
+                      m)
 
 add_executable(test_matrix
                test_matrix.c

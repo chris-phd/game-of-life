@@ -1,4 +1,0 @@
-- remove debug prints
-- print control information to standartd out
-- make some cool shapes and get some screenshots
-- add a README, including build instructions for ubuntu linux

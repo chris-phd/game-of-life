@@ -114,7 +114,7 @@ void cleanup(struct Renderer *renderer, struct World *world) {
 }
 
 void printUsage() {
-    fprintf(stderr, "./game_of_life -l load_file_path -s save_file_path -c [terminal, vaporwave, grayscale]");
+    fprintf(stderr, "./game_of_life -l load_file_path -s save_file_path -c [terminal, light, grayscale]");
 }
 
 void printControls() {
