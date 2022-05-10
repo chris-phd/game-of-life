@@ -216,11 +216,11 @@ void rendererDestroy(struct Renderer *self) {
 }
 
 static float windowZoom() {
-    return window.mouse.scroll * 0.1f;
+    return window.mouse.scroll * 0.5f;
 }
 
 static void setWindowZoom(float zoom) {
-    float scroll = zoom * 10.0f;
+    float scroll = zoom * 2.0f;
     if (scroll > SCROLL_MAX)
         scroll = SCROLL_MAX;
     else if (scroll < SCROLL_MIN)
@@ -306,17 +306,10 @@ int rendererGrowWorldToFillView(struct Renderer *self, struct World *world) {
     int visible_br_cell_pos_x = (int) max_x * cell_spacing_inv + 1;
     int visible_br_cell_pos_y = (int) -min_y * cell_spacing_inv + 1;
 
-//    fprintf(stderr, "    tl cell pos x= %d\n", world->tl_cell_pos_x);
-//    fprintf(stderr, "    tl cell pos y= %d\n", world->tl_cell_pos_y);
-//    fprintf(stderr, "    visible tl x = %d\n", visible_tl_cell_pos_x);
-//    fprintf(stderr, "    visible tl y = %d\n", visible_tl_cell_pos_y);
-//    fprintf(stderr, "    visible br x = %d\n", visible_br_cell_pos_x);
-//    fprintf(stderr, "    visible br y = %d\n", visible_br_cell_pos_y);
-
     float block_cols_inv = 1.0f / world->block_cols;
     float block_rows_inv = 1.0f / world->block_rows;
-    float grow_left = ((float) world->tl_cell_pos_x - visible_tl_cell_pos_x) * block_cols_inv; // so if the difference is less than one block size, then no new space is allocated..
-    float grow_right = ((float) visible_br_cell_pos_x - world->tl_cell_pos_x - world->cols) * block_cols_inv; // Need to increase by 1 if grow left is at all positive, cant truncate.
+    float grow_left = ((float) world->tl_cell_pos_x - visible_tl_cell_pos_x) * block_cols_inv;
+    float grow_right = ((float) visible_br_cell_pos_x - world->tl_cell_pos_x - world->cols) * block_cols_inv;
     float grow_top = ((float) world->tl_cell_pos_y - visible_tl_cell_pos_y) * block_rows_inv;
     float grow_bottom = ((float) visible_br_cell_pos_y - world->tl_cell_pos_y - world->rows) * block_rows_inv;
 
@@ -331,10 +324,6 @@ int rendererGrowWorldToFillView(struct Renderer *self, struct World *world) {
     grow_top = max(grow_top, 0.0f);
     grow_bottom = max(grow_bottom, 0.0f);
 
-//    fprintf(stderr, "    grow_left   = %d\n", (int) grow_left);
-//    fprintf(stderr, "    grow_right  = %d\n", (int) grow_right);
-//    fprintf(stderr, "    grow_top    = %d\n", (int) grow_top);
-//    fprintf(stderr, "    grow_bottom = %d\n", (int) grow_bottom);
     if (grow_left > 0 || grow_right > 0 || grow_top > 0 || grow_bottom > 0) {
 
         int prev_tl_cell_pos_x = world->tl_cell_pos_x;
