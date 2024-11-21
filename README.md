@@ -1,6 +1,6 @@
 # Conway's Game Of Life
 
-The Game of Life is cellular automaton created by John Conway. The rules of this zero player game can be found on [wikipedia](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life).
+The [Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) is cellular automaton created by John Conway.
 
 ## Controls
 ```
@@ -14,8 +14,8 @@ The Game of Life is cellular automaton created by John Conway. The rules of this
   Slow down = shift + s or shift + down arrow
 ```
 
-## Build Instructions
-Currently only Ubuntu 20.04 is supported.
+## Build
+Currently only Ubuntu is officially supported.
 
 ```
 git clone https://github.com/C-J-Cooper/athena-engine.git
